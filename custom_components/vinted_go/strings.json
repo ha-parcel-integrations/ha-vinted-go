@@ -1,0 +1,129 @@
+{
+  "title": "Vinted Go",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up Vinted Go",
+        "description": "Enter the e-mail address of your Vinted Go account. Vinted Go will send you a verification link — no password needed.",
+        "data": {
+          "email": "E-mail address"
+        }
+      },
+      "verify": {
+        "title": "Enter the verification link",
+        "description": "Open the e-mail Vinted Go just sent to {email} and paste the verification link (or just its token) here.",
+        "data": {
+          "token": "Verification link or token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect Vinted Go",
+        "description": "Your Vinted Go session for {email} has expired. Continue to receive a fresh verification link by e-mail."
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach Vinted Go. Please try again.",
+      "invalid_token": "That verification link or token is invalid or has expired. Request a new one."
+    },
+    "abort": {
+      "already_configured": "This Vinted Go account is already set up.",
+      "wrong_account": "The verification link is for a different Vinted Go account than the one being reconnected.",
+      "reauth_successful": "Vinted Go was reconnected successfully."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Vinted Go options",
+        "sections": {
+          "delivered": {
+            "name": "Delivered parcels",
+            "data": {
+              "delivered_filter_type": "Filter by",
+              "delivered_filter_amount": "Amount"
+            },
+            "data_description": {
+              "delivered_filter_type": "Show delivered parcels from the last X days, or limit to the X most recent.",
+              "delivered_filter_amount": "Number of days or parcels to show."
+            }
+          },
+          "history": {
+            "name": "Parcel history",
+            "data": {
+              "include_history": "Include status history"
+            },
+            "data_description": {
+              "include_history": "Add a per-parcel history attribute listing each status update (timestamp, status, original text). Off by default."
+            }
+          },
+          "polling": {
+            "name": "Polling",
+            "data": {
+              "refresh_interval": "Refresh every"
+            },
+            "data_description": {
+              "refresh_interval": "How often the integration checks Vinted Go for parcel updates. A slower interval is gentler on Vinted Go's API; the default of 30 minutes is plenty for most parcels."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutes",
+        "30": "30 minutes",
+        "60": "60 minutes",
+        "120": "120 minutes",
+        "240": "240 minutes"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Days",
+        "parcels": "Number of parcels"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "A parcel was registered",
+      "parcel_status_changed": "A parcel's status changed",
+      "parcel_delivered": "A parcel was delivered",
+      "outgoing_parcel_status_changed": "A sent parcel's status changed",
+      "outgoing_parcel_delivered": "A sent parcel was delivered"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Incoming parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "delivered_parcels": {
+        "name": "Delivered parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "outgoing_parcels": {
+        "name": "Outgoing parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Delivered outgoing parcels",
+        "unit_of_measurement": "parcels"
+      },
+      "last_update": {
+        "name": "Last successful update"
+      },
+      "parcel": {
+        "name": "Parcel {barcode}"
+      }
+    }
+  }
+}

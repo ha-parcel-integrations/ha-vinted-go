@@ -1,0 +1,29 @@
+# Notify when a Vinted Go parcel is ready to collect at its service point.
+#
+# Vinted Go is a pickup-point carrier — the useful "come and get it" moment is
+# when a parcel reaches `at_pickup_point`, not a doorstep delivery. The pickup
+# location name is on the parcel's `pickup_point` attribute.
+
+alias: "Vinted Go: ready for pickup"
+description: Notify when a tracked Vinted Go parcel is ready to collect.
+mode: queued
+max: 10
+
+triggers:
+  - trigger: event
+    event_type: vinted_go_parcel_status_changed
+
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.new_status == 'at_pickup_point' }}"
+
+actions:
+  - action: notify.mobile_app
+    data:
+      title: "Vinted Go klaar om op te halen"
+      message: >-
+        {{ trigger.event.data.barcode }} ligt klaar
+        {{ ('bij ' ~ trigger.event.data.pickup_point)
+           if trigger.event.data.pickup_point else '' }}.
+      data:
+        clickAction: "{{ trigger.event.data.url }}"

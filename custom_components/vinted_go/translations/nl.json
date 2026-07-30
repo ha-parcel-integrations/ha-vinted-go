@@ -1,0 +1,129 @@
+{
+  "title": "Vinted Go",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Vinted Go instellen",
+        "description": "Voer het e-mailadres van je Vinted Go-account in. Vinted Go stuurt je een verificatielink — geen wachtwoord nodig.",
+        "data": {
+          "email": "E-mailadres"
+        }
+      },
+      "verify": {
+        "title": "Verificatielink invoeren",
+        "description": "Open de e-mail die Vinted Go zojuist naar {email} stuurde en plak de verificatielink (of alleen de token) hier.",
+        "data": {
+          "token": "Verificatielink of token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Vinted Go opnieuw verbinden",
+        "description": "Je Vinted Go-sessie voor {email} is verlopen. Ga verder om een nieuwe verificatielink per e-mail te ontvangen."
+      }
+    },
+    "error": {
+      "cannot_connect": "Kon Vinted Go niet bereiken. Probeer het opnieuw.",
+      "invalid_token": "Die verificatielink of token is ongeldig of verlopen. Vraag een nieuwe aan."
+    },
+    "abort": {
+      "already_configured": "Dit Vinted Go-account is al ingesteld.",
+      "wrong_account": "De verificatielink hoort bij een ander Vinted Go-account dan het account dat opnieuw verbonden wordt.",
+      "reauth_successful": "Vinted Go is opnieuw verbonden."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Vinted Go-opties",
+        "sections": {
+          "delivered": {
+            "name": "Bezorgde pakketten",
+            "data": {
+              "delivered_filter_type": "Filteren op",
+              "delivered_filter_amount": "Aantal"
+            },
+            "data_description": {
+              "delivered_filter_type": "Toon bezorgde pakketten van de laatste X dagen, of beperk tot de X meest recente.",
+              "delivered_filter_amount": "Aantal dagen of pakketten om te tonen."
+            }
+          },
+          "history": {
+            "name": "Pakketgeschiedenis",
+            "data": {
+              "include_history": "Statusgeschiedenis meenemen"
+            },
+            "data_description": {
+              "include_history": "Voegt per pakket een geschiedenis-attribuut toe met elke statusupdate (tijdstip, status, originele tekst). Standaard uit."
+            }
+          },
+          "polling": {
+            "name": "Ophalen",
+            "data": {
+              "refresh_interval": "Ververs elke"
+            },
+            "data_description": {
+              "refresh_interval": "Hoe vaak de integratie Vinted Go controleert op updates. Een langzamer interval is vriendelijker voor de API van Vinted Go; 30 minuten is voor de meeste pakketten ruim voldoende."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minuten",
+        "30": "30 minuten",
+        "60": "60 minuten",
+        "120": "120 minuten",
+        "240": "240 minuten"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dagen",
+        "parcels": "Aantal pakketten"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Een pakket is geregistreerd",
+      "parcel_status_changed": "De status van een pakket is gewijzigd",
+      "parcel_delivered": "Een pakket is bezorgd",
+      "outgoing_parcel_status_changed": "De status van een verzonden pakket is gewijzigd",
+      "outgoing_parcel_delivered": "Een verzonden pakket is bezorgd"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Verversen"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Inkomende pakketten",
+        "unit_of_measurement": "pakketten"
+      },
+      "delivered_parcels": {
+        "name": "Bezorgde pakketten",
+        "unit_of_measurement": "pakketten"
+      },
+      "outgoing_parcels": {
+        "name": "Uitgaande pakketten",
+        "unit_of_measurement": "pakketten"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Bezorgde uitgaande pakketten",
+        "unit_of_measurement": "pakketten"
+      },
+      "last_update": {
+        "name": "Laatste succesvolle update"
+      },
+      "parcel": {
+        "name": "Pakket {barcode}"
+      }
+    }
+  }
+}

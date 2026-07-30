@@ -1,0 +1,29 @@
+{
+  "entity": {
+    "button": {
+      "refresh": {
+        "default": "mdi:refresh"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "default": "mdi:package-variant-closed"
+      },
+      "delivered_parcels": {
+        "default": "mdi:package-variant"
+      },
+      "outgoing_parcels": {
+        "default": "mdi:package-up"
+      },
+      "outgoing_delivered_parcels": {
+        "default": "mdi:package-variant"
+      },
+      "last_update": {
+        "default": "mdi:clock-check-outline"
+      },
+      "parcel": {
+        "default": "mdi:package-variant-closed"
+      }
+    }
+  }
+}
