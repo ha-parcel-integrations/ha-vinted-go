@@ -176,6 +176,28 @@ def test_normalize_keeps_raw_payload():
     assert normalize_parcel(raw)["raw"] is raw
 
 
+def test_point_shape_logged_once_with_name(caplog):
+    import custom_components.vinted_go.parcels as parcels_mod
+
+    parcels_mod._point_shape_logged = False
+    raw = parcel_raw("VGS1", point={"name": "Central Station", "address": "x"})
+    normalize_parcel(raw)
+    normalize_parcel(parcel_raw("VGS2", point={"name": "Other"}))  # one-shot
+    assert caplog.text.count("pickup point seen for the first time") == 1
+    assert "fields=['address', 'name']" in caplog.text
+    assert "issues/new" in caplog.text
+    assert "WARNING" in caplog.text
+
+
+def test_point_without_name_warns(caplog):
+    import custom_components.vinted_go.parcels as parcels_mod
+
+    parcels_mod._point_shape_logged = False
+    normalize_parcel(parcel_raw("VGS1", point={"label": "Central Station"}))
+    assert "no 'name' field" in caplog.text
+    assert "fields=['label']" in caplog.text
+
+
 # --- sort / filter ----------------------------------------------------------
 
 

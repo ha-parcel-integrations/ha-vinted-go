@@ -97,6 +97,34 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
 # only once per HA session instead of on every poll.
 _unmapped_statuses_logged: set[str] = set()
 
+# We have never seen a populated ``point`` (pickup location) in live data, so we
+# log its shape once when a real parcel first carries one — a pre-1.0 "help us
+# confirm this" signal. Keys only, never values (a point is an address).
+_point_shape_logged = False
+
+
+def _note_point_shape(point: dict) -> None:
+    """One-shot: report the pickup-point structure so a tester can confirm it."""
+    global _point_shape_logged
+    if _point_shape_logged:
+        return
+    _point_shape_logged = True
+    keys = sorted(point.keys())
+    if point.get("name"):
+        _LOGGER.warning(
+            "Vinted Go pickup point seen for the first time (fields=%s) — we've "
+            "not confirmed this shape against real data. Please help us verify it: %s",
+            keys,
+            NEW_ISSUE_URL,
+        )
+    else:
+        _LOGGER.warning(
+            "Vinted Go pickup point present but no 'name' field (fields=%s) — the "
+            "point name will be blank. Please report so we can map it: %s",
+            keys,
+            NEW_ISSUE_URL,
+        )
+
 
 def _warn_unmapped_status(code: str) -> None:
     """Log an unmapped carrier status once, with a copy-paste issue link."""
@@ -303,6 +331,8 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         delivered_at = to_iso_timestamp(raw.get("last_tracking_event_at"))
 
     point = raw.get("point")
+    if isinstance(point, dict) and point:
+        _note_point_shape(point)
     pickup_point = point.get("name") if isinstance(point, dict) else None
 
     return {

@@ -31,7 +31,9 @@ parcels. Confirm with active and received parcels:
       `delivered` groups are confirmed; the rest of `_STATUS_MAP` (⚠) is inferred.
       Watch for `unknown` + the one-shot WARNING and extend the map.
 - [ ] The **`point` shape** on an at-pickup parcel (name/address/hours) so
-      `pickup_point` and diagnostics redaction stay right.
+      `pickup_point` and diagnostics redaction stay right. **Self-reports:** the
+      first populated `point` logs a one-shot WARNING with its field names + an
+      issue link (`_note_point_shape`).
 - [ ] That **received (`recipient`) parcels** show up and map correctly (the
       account tested had only sent parcels).
 - [ ] The account `shipment_state` / `status_group` / `resolution` values for
