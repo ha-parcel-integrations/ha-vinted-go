@@ -8,9 +8,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        The integration logs a line such as
-        `[parcel] status=… category=… → reported as 'unknown'` or
-        `[history] key=… phase=… → reported as 'unknown'`.
+        The integration logs a warning such as
+        `Unrecognised Vinted Go status — help us map it … status=… → reported as 'unknown'`.
         Paste that full line below and we'll add it to the mapping.
   - type: textarea
     id: logline
@@ -24,7 +23,7 @@ body:
     id: version
     attributes:
       label: Integration version
-      placeholder: "e.g. 2.6.0"
+      placeholder: "e.g. 0.9.0"
     validations:
       required: true
   - type: input
