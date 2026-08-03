@@ -48,6 +48,7 @@ jobs:
 
       - name: Run tests
         run: pytest tests/ -v
+
   ruff:
     name: Lint with Ruff
     runs-on: ubuntu-latest
