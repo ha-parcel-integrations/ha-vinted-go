@@ -39,5 +39,3 @@ ENV/
 
 # Claude Code (local)
 .claude/
-
-# Local-only maintainer working checklist (our notes, not shipped)
