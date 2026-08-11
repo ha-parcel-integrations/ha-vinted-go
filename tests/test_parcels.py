@@ -5,9 +5,11 @@ import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.vinted_go.const import (
+    CAPABILITIES,
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     DOMAIN,
+    KNOWN_CAPABILITIES,
     ParcelStatus,
 )
 from custom_components.vinted_go.parcels import (
@@ -238,3 +240,13 @@ def test_delivered_filter_by_days():
 def test_delivered_filter_by_count():
     parcels = _delivered_pair()
     assert apply_delivered_filter(parcels, _entry("parcels", 1)) == parcels[:1]
+
+
+def test_capabilities_are_known_values():
+    """A typo here would silently misreport this carrier on the docs site."""
+    assert CAPABILITIES <= KNOWN_CAPABILITIES
+
+
+def test_capabilities_are_pickup_point_url_and_history():
+    """The account payload carries the service point but no ETA/weight/dimensions."""
+    assert CAPABILITIES == {"pickup_point", "url", "history"}

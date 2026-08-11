@@ -28,6 +28,20 @@ class ParcelStatus(StrEnum):
 
 PLATFORMS = [Platform.BUTTON, Platform.SENSOR]
 
+# Every optional key the parcel contract defines. CAPABILITIES below must be a
+# subset of this — it exists so a typo in CAPABILITIES fails a test instead of
+# silently dropping this carrier off a table on the docs site.
+KNOWN_CAPABILITIES = frozenset(
+    {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
+)
+
+# Which optional contract fields this carrier's API actually populates — feeds
+# the comparison table on the docs site. Keep in lockstep with
+# normalize_parcel() in parcels.py: everything not listed here comes back as a
+# literal None there. Vinted Go's account payload carries the service point
+# but no sender/receiver, ETA, weight or dimensions.
+CAPABILITIES = frozenset({"pickup_point", "url", "history"})
+
 # --- Vinted Go account API (carrier.vintedgo.com/members) --------------------
 #
 # Vinted Go is account-based: a user logs in once with their e-mail (the same

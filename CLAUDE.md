@@ -53,7 +53,9 @@ auto-imports every parcel (received and sent).
   list costs one shipments call and no timeline calls. Per-parcel timeline fetches
   are best-effort (return `None`) so one bad timeline never fails the poll.
 - **No ETA** — `planned_from`/`planned_to` always `None`, so the calendar and
-  `next_delivery` sensor stay inert (kept for parity). **Direction**
+  `next_delivery` sensor stay inert (kept for parity). Reflected in
+  `const.py`'s `CAPABILITIES` (feeds the docs site's comparison table) — keep
+  the two in agreement if that ever changes. **Direction**
   (received/sent) splits incoming from outgoing; it lives under `raw`, not a
   canonical field. Unmapped status → `unknown` + one-shot warning.
 
