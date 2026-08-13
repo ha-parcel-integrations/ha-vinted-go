@@ -1,0 +1,129 @@
+{
+  "title": "Vinted Go",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar o Vinted Go",
+        "description": "Introduza o endereço de e-mail da sua conta Vinted Go. O Vinted Go vai enviar-lhe uma ligação de verificação — sem necessidade de palavra-passe.",
+        "data": {
+          "email": "Endereço de e-mail"
+        }
+      },
+      "verify": {
+        "title": "Introduza a ligação de verificação",
+        "description": "Abra o e-mail que o Vinted Go acabou de enviar para {email} e cole aqui a ligação de verificação (ou apenas o respetivo token).",
+        "data": {
+          "token": "Ligação de verificação ou token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconectar o Vinted Go",
+        "description": "A sua sessão do Vinted Go para {email} expirou. Continue para receber uma nova ligação de verificação por e-mail."
+      }
+    },
+    "error": {
+      "cannot_connect": "Não foi possível contactar o Vinted Go. Tente novamente.",
+      "invalid_token": "Essa ligação de verificação ou token é inválido ou expirou. Solicite um novo."
+    },
+    "abort": {
+      "already_configured": "Esta conta Vinted Go já está configurada.",
+      "wrong_account": "A ligação de verificação corresponde a uma conta Vinted Go diferente da que está a ser reconectada.",
+      "reauth_successful": "O Vinted Go foi reconectado com sucesso."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do Vinted Go",
+        "sections": {
+          "delivered": {
+            "name": "Encomendas entregues",
+            "data": {
+              "delivered_filter_type": "Filtrar por",
+              "delivered_filter_amount": "Quantidade"
+            },
+            "data_description": {
+              "delivered_filter_type": "Mostrar as encomendas entregues nos últimos X dias, ou limitar às X mais recentes.",
+              "delivered_filter_amount": "Número de dias ou encomendas a mostrar."
+            }
+          },
+          "history": {
+            "name": "Histórico de encomendas",
+            "data": {
+              "include_history": "Incluir histórico de estados"
+            },
+            "data_description": {
+              "include_history": "Adiciona um atributo de histórico por encomenda com cada atualização de estado (data/hora, estado, texto original). Desativado por predefinição."
+            }
+          },
+          "polling": {
+            "name": "Atualização",
+            "data": {
+              "refresh_interval": "Atualizar a cada"
+            },
+            "data_description": {
+              "refresh_interval": "Com que frequência a integração verifica atualizações de encomendas no Vinted Go. Um intervalo mais lento é mais leve para a API do Vinted Go; a predefinição de 30 minutos é suficiente para a maioria das encomendas."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutos",
+        "30": "30 minutos",
+        "60": "60 minutos",
+        "120": "120 minutos",
+        "240": "240 minutos"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Dias",
+        "parcels": "Número de encomendas"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Uma encomenda foi registada",
+      "parcel_status_changed": "O estado de uma encomenda mudou",
+      "parcel_delivered": "Uma encomenda foi entregue",
+      "outgoing_parcel_status_changed": "O estado de uma encomenda enviada mudou",
+      "outgoing_parcel_delivered": "Uma encomenda enviada foi entregue"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Atualizar"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Encomendas recebidas",
+        "unit_of_measurement": "encomendas"
+      },
+      "delivered_parcels": {
+        "name": "Encomendas entregues",
+        "unit_of_measurement": "encomendas"
+      },
+      "outgoing_parcels": {
+        "name": "Encomendas enviadas",
+        "unit_of_measurement": "encomendas"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Encomendas enviadas entregues",
+        "unit_of_measurement": "encomendas"
+      },
+      "last_update": {
+        "name": "Última atualização com sucesso"
+      },
+      "parcel": {
+        "name": "Encomenda {barcode}"
+      }
+    }
+  }
+}

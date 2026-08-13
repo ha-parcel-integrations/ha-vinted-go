@@ -1,0 +1,129 @@
+{
+  "title": "Vinted Go",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar Vinted Go",
+        "description": "Introduce la dirección de correo electrónico de tu cuenta de Vinted Go. Vinted Go te enviará un enlace de verificación — no se necesita contraseña.",
+        "data": {
+          "email": "Dirección de correo electrónico"
+        }
+      },
+      "verify": {
+        "title": "Introduce el enlace de verificación",
+        "description": "Abre el correo que Vinted Go acaba de enviar a {email} y pega aquí el enlace de verificación (o simplemente su token).",
+        "data": {
+          "token": "Enlace de verificación o token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconectar Vinted Go",
+        "description": "Tu sesión de Vinted Go para {email} ha caducado. Continúa para recibir un nuevo enlace de verificación por correo electrónico."
+      }
+    },
+    "error": {
+      "cannot_connect": "No se pudo conectar con Vinted Go. Inténtalo de nuevo.",
+      "invalid_token": "Ese enlace de verificación o token no es válido o ha caducado. Solicita uno nuevo."
+    },
+    "abort": {
+      "already_configured": "Esta cuenta de Vinted Go ya está configurada.",
+      "wrong_account": "El enlace de verificación corresponde a una cuenta de Vinted Go diferente de la que se está reconectando.",
+      "reauth_successful": "Vinted Go se ha reconectado correctamente."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de Vinted Go",
+        "sections": {
+          "delivered": {
+            "name": "Paquetes entregados",
+            "data": {
+              "delivered_filter_type": "Filtrar por",
+              "delivered_filter_amount": "Cantidad"
+            },
+            "data_description": {
+              "delivered_filter_type": "Mostrar los paquetes entregados en los últimos X días, o limitar a los X más recientes.",
+              "delivered_filter_amount": "Número de días o paquetes a mostrar."
+            }
+          },
+          "history": {
+            "name": "Historial de paquetes",
+            "data": {
+              "include_history": "Incluir historial de estados"
+            },
+            "data_description": {
+              "include_history": "Añade un atributo de historial por paquete con cada actualización de estado (marca de tiempo, estado, texto original). Desactivado de forma predeterminada."
+            }
+          },
+          "polling": {
+            "name": "Actualización",
+            "data": {
+              "refresh_interval": "Actualizar cada"
+            },
+            "data_description": {
+              "refresh_interval": "Con qué frecuencia la integración comprueba las actualizaciones de paquetes en Vinted Go. Un intervalo más lento es menos exigente para la API de Vinted Go; el valor predeterminado de 30 minutos es suficiente para la mayoría de los paquetes."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "refresh_interval": {
+      "options": {
+        "15": "15 minutos",
+        "30": "30 minutos",
+        "60": "60 minutos",
+        "120": "120 minutos",
+        "240": "240 minutos"
+      }
+    },
+    "delivered_filter_type": {
+      "options": {
+        "days": "Días",
+        "parcels": "Número de paquetes"
+      }
+    }
+  },
+  "device_automation": {
+    "trigger_type": {
+      "parcel_registered": "Se registró un paquete",
+      "parcel_status_changed": "El estado de un paquete cambió",
+      "parcel_delivered": "Se entregó un paquete",
+      "outgoing_parcel_status_changed": "El estado de un paquete enviado cambió",
+      "outgoing_parcel_delivered": "Se entregó un paquete enviado"
+    }
+  },
+  "entity": {
+    "button": {
+      "refresh": {
+        "name": "Actualizar"
+      }
+    },
+    "sensor": {
+      "incoming_parcels": {
+        "name": "Paquetes entrantes",
+        "unit_of_measurement": "paquetes"
+      },
+      "delivered_parcels": {
+        "name": "Paquetes entregados",
+        "unit_of_measurement": "paquetes"
+      },
+      "outgoing_parcels": {
+        "name": "Paquetes salientes",
+        "unit_of_measurement": "paquetes"
+      },
+      "outgoing_delivered_parcels": {
+        "name": "Paquetes salientes entregados",
+        "unit_of_measurement": "paquetes"
+      },
+      "last_update": {
+        "name": "Última actualización correcta"
+      },
+      "parcel": {
+        "name": "Paquete {barcode}"
+      }
+    }
+  }
+}
