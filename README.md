@@ -6,7 +6,7 @@
 
 > 💬 Questions or feedback? Join the discussion on the [Home Assistant community](https://community.home-assistant.io/t/packages-postnl-dhl-nl-dpd-and-gls-parcel-integration/112433/).
 
-A custom Home Assistant integration for your [Vinted Go](https://vintedgo.com) (formerly Homerr) account. Log in once with your e-mail — no password — and it automatically tracks every parcel on your account: the ones you're **receiving** and the ones you **sent**. Vinted Go is a pickup-point carrier across the Benelux and France: parcels are collected from a locker, parcel shop or neighbourhood point.
+A custom Home Assistant integration for your [Vinted Go](https://vintedgo.com) (formerly Homerr) account. Log in once with your e-mail — no password — and it automatically tracks every parcel on your account: the ones you're **receiving** and the ones you **sent**. Vinted Go is a pickup-point carrier across the Netherlands, Belgium, France, Spain and Portugal: parcels are collected from a locker, parcel shop or neighbourhood point.
 
 Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 
@@ -53,7 +53,7 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 ## Requirements
 
 - Home Assistant 2024.7 or newer
-- A Vinted Go account (the app's e-mail login — no password needed). If you buy or sell on Vinted in the Benelux/France, your parcels are handled by Vinted Go.
+- A Vinted Go account (the app's e-mail login — no password needed). If you buy or sell on Vinted in the Netherlands, Belgium, France, Spain or Portugal, your parcels are handled by Vinted Go.
 
 ## Installation
 
