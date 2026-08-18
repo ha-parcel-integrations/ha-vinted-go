@@ -12,11 +12,13 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 > ### ⚠️ Early release — status vocabulary still collecting
 >
-> Login, parcel auto-import (received and sent), polling and mapping all work.
-> What is still incomplete is the **status vocabulary** — Vinted Go's status
-> tokens are still being observed from real parcels, so a state we do not map yet
-> reports **`unknown`** (never a wrong status) and logs a one-shot warning with a
-> ready-made issue link — please
+> Login, parcel auto-import (received and sent), polling and mapping all work,
+> confirmed on real accounts for both directions. What is still incomplete is
+> the **status vocabulary** — a few less common tokens (a successful final
+> collection on the receiving side, exception states like a lost or disposed
+> parcel) are still being observed from real parcels, so a state we do not map
+> yet reports **`unknown`** (never a wrong status) and logs a one-shot warning
+> with a ready-made issue link — please
 > [report it](https://github.com/ha-parcel-integrations/ha-vinted-go/issues/new?template=unrecognised_status.yml)
 > so the mapping can be completed.
 

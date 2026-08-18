@@ -36,7 +36,11 @@ from .payloads import event, parcel_raw
         ("in_transit", ParcelStatus.IN_TRANSIT),
         ("in_delivery", ParcelStatus.OUT_FOR_DELIVERY),
         ("available_for_pickup", ParcelStatus.AT_PICKUP_POINT),
+        ("ready_for_pickup", ParcelStatus.AT_PICKUP_POINT),
         ("delivered", ParcelStatus.DELIVERED),
+        ("return", ParcelStatus.RETURNING),
+        ("returned", ParcelStatus.DELIVERED),
+        ("redirected", ParcelStatus.IN_TRANSIT),
         ("return_to_sender", ParcelStatus.RETURNING),
         ("lost", ParcelStatus.PROBLEM),
     ],
@@ -147,6 +151,22 @@ def test_normalize_pickup_point_and_bool():
     assert parcel["status"] == ParcelStatus.AT_PICKUP_POINT
     assert parcel["pickup"] is True
     assert parcel["pickup_point"] == "Vinted Go Point Central Station"
+
+
+def test_normalize_returned_parcel_reports_delivered():
+    """A concluded return ("returned") must not fall back to unknown.
+
+    Regression test for a real receiving account (ha-vinted-go#4): the
+    "returned" group was missing from the map, so every completed return
+    reported ``unknown`` instead of ``delivered``.
+    """
+    raw = parcel_raw("VGS1")
+    raw["tracking_events"].append(
+        event("returned", "2026-07-30T09:00:00Z", "Return: Parcel was returned")
+    )
+    parcel = normalize_parcel(raw)
+    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["delivered"] is True
 
 
 def test_normalize_history_is_opt_in():

@@ -49,6 +49,12 @@ NEW_ISSUE_URL = (
 # the label map calls it ``inTransit``. We map on ``group`` because it is
 # language-independent (the human ``message`` text is not).
 #
+# A return leg does NOT get its own "return_"-prefixed group — a confirmed
+# receiving account's return history reuses the plain "in_transit" /
+# "ready_for_pickup" groups with the event's ``state`` field set to
+# ``"return"`` instead of ``"delivery"``. Since both directions map to the
+# same ParcelStatus here, the ``state`` field is not needed for mapping.
+#
 # ✓ = confirmed from a live parcel; the rest are inferred from the label map's
 # full status universe (the snake_case form of each camelCase label key) and are
 # best-effort until a real parcel in that state is seen — an unmapped ``group``
@@ -64,11 +70,12 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "in_depot": ParcelStatus.IN_TRANSIT,
     "left_depot": ParcelStatus.IN_TRANSIT,
     "in_transit": ParcelStatus.IN_TRANSIT,  # ✓
+    "redirected": ParcelStatus.IN_TRANSIT,  # ✓ sent to a different pickup point, still moving
     # on its way to the delivery address
     "in_delivery": ParcelStatus.OUT_FOR_DELIVERY,
     # waiting at a pickup point / locker
     "available_for_pickup": ParcelStatus.AT_PICKUP_POINT,
-    "ready_for_pickup": ParcelStatus.AT_PICKUP_POINT,
+    "ready_for_pickup": ParcelStatus.AT_PICKUP_POINT,  # ✓
     "ready_for_collection_at_merchant": ParcelStatus.AT_PICKUP_POINT,
     # delivered / concluded
     "delivered": ParcelStatus.DELIVERED,
@@ -81,7 +88,8 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "cancelled": ParcelStatus.PROBLEM,
     "pickup_cancelled": ParcelStatus.PROBLEM,
     # returns to sender
-    "return": ParcelStatus.RETURNING,
+    "return": ParcelStatus.RETURNING,  # ✓ return in progress
+    "returned": ParcelStatus.DELIVERED,  # ✓ return concluded — handed back to the sender
     "return_return": ParcelStatus.RETURNING,
     "return_to_sender": ParcelStatus.RETURNING,
     "return_in_transit": ParcelStatus.RETURNING,
