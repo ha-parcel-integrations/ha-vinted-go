@@ -78,7 +78,7 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "ready_for_pickup": ParcelStatus.AT_PICKUP_POINT,  # ✓
     "ready_for_collection_at_merchant": ParcelStatus.AT_PICKUP_POINT,
     # delivered / concluded
-    "delivered": ParcelStatus.DELIVERED,
+    "delivered": ParcelStatus.DELIVERED,  # ✓ a recipient parcel's terminal event
     "concluded": ParcelStatus.DELIVERED,
     # exceptions
     "disposed": ParcelStatus.PROBLEM,
