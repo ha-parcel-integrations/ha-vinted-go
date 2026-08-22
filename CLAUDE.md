@@ -22,7 +22,7 @@ you act in one of these areas:
 | consider "fixing" a lint/pattern the skill flags (poll interval, inline client) | *Deliberate skill divergences* |
 | commit, bump, tag, release, or write release notes; add a feature without a test | *Workflow / Commits / Versioning / Testing* |
 
-**API mechanics live in `carrier-research/api/vinted-go/` (private research repo)** — the passwordless
+**API mechanics live in `carrier-research/vinted-go/api/` (private research repo)** — the passwordless
 e-mail login flow, the shipments + public timeline endpoints, the payload→canonical
 mapping and the status vocabulary. Do not duplicate them here.
 
@@ -97,5 +97,5 @@ python -m pytest tests/ --cov=custom_components.vinted_go
 
 Coverage must stay **above 95%** (silver `test-coverage` rule). Run before
 committing. A code change updates the README + this file in the same commit;
-the API reference now lives in the private `carrier-research/api/vinted-go/`,
+the API reference now lives in the private `carrier-research/vinted-go/api/`,
 not in this repo.
