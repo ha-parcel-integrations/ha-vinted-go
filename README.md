@@ -54,7 +54,7 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 ## Requirements
 
-- Home Assistant 2024.7 or newer
+- Home Assistant 2024.12 or newer
 - A Vinted Go account (the app's e-mail login — no password needed). If you buy or sell on Vinted in the Netherlands, Belgium, France, Spain or Portugal, your parcels are handled by Vinted Go.
 
 ## Installation
@@ -104,6 +104,8 @@ Standard HA removal applies: **Settings → Devices & Services → Vinted Go →
 | `sensor.vinted_go_<email>_last_successful_update` | Diagnostic: when Vinted Go was last polled successfully |
 
 A delivered parcel moves from its per-parcel sensor to the matching delivered sensor automatically.
+
+A **Refresh** button entity forces an immediate poll, without waiting for the next scheduled interval.
 
 ## Parcel status reference
 
