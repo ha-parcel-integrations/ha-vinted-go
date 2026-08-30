@@ -26,7 +26,12 @@ from .const import (
     DOMAIN,
     ParcelStatus,
 )
-from .parcels import apply_delivered_filter, normalize_parcel, sort_parcels_by_ts
+from .parcels import (
+    apply_delivered_filter,
+    normalize_parcel,
+    sort_parcels_by_ts,
+    warn_unrecognised_contact_type,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -138,6 +143,10 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
             p for p in normalized
             if p["raw"].get("contact_type") == CONTACT_TYPE_SENDER
         ]
+        for p in normalized:
+            contact_type = p["raw"].get("contact_type")
+            if contact_type not in (CONTACT_TYPE_RECIPIENT, CONTACT_TYPE_SENDER):
+                warn_unrecognised_contact_type(p.get("barcode"), contact_type)
 
         self.delivered, active_in = self._split_delivered(incoming, "planned_from")
         self.delivered_outgoing, active_out = self._split_delivered(

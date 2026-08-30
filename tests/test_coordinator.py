@@ -67,6 +67,20 @@ async def test_update_splits_incoming_and_outgoing(hass):
     assert coord.last_success_time is not None
 
 
+async def test_unrecognised_contact_type_is_logged_and_dropped_from_both(hass, caplog):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    s_weird, t_weird = _ship(IN, "courier", "in_transit", "2026-07-29T10:00:00Z")
+    coord = VintedGoCoordinator(hass, _client([s_weird], {IN: t_weird}), entry)
+
+    data = await coord._async_update_data()
+
+    assert data == []
+    assert coord.outgoing == []
+    assert IN in caplog.text
+    assert "contact_type" in caplog.text
+
+
 async def test_delivered_goes_to_delivered_lists(hass):
     entry = _entry()
     entry.add_to_hass(hass)

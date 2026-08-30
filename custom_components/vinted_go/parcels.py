@@ -147,6 +147,33 @@ def _warn_unmapped_status(code: str) -> None:
     )
 
 
+# Barcodes we've already warned about, so a persistently unrecognised
+# contact_type doesn't re-log on every poll.
+_unmapped_contact_types_logged: set[str] = set()
+
+
+def warn_unrecognised_contact_type(barcode: str | None, contact_type: str | None) -> None:
+    """Log once when a shipment's ``contact_type`` matches neither known value.
+
+    The coordinator splits shipments into incoming/outgoing purely by
+    ``contact_type == "recipient"`` / ``"sender"``. Anything else (missing,
+    renamed, a value we've never seen) matches neither branch and the
+    shipment would otherwise vanish from every sensor with no trace.
+    """
+    key = barcode or "unknown"
+    if key in _unmapped_contact_types_logged:
+        return
+    _unmapped_contact_types_logged.add(key)
+    _LOGGER.warning(
+        "Vinted Go shipment %s has an unrecognised contact_type (%s) — it "
+        "matches neither incoming nor outgoing, so it won't appear on any "
+        "sensor. Please report it: %s",
+        key,
+        contact_type,
+        NEW_ISSUE_URL,
+    )
+
+
 def map_parcel_status(code: str | None) -> ParcelStatus:
     """Map a carrier status code to a canonical :class:`ParcelStatus`.
 
