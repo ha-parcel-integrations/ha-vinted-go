@@ -1,0 +1,32 @@
+# Notify exactly once per parcel when Vinted Go says it's on the
+# delivery vehicle today. Filters on the normalised
+# ParcelStatus.OUT_FOR_DELIVERY value so this is independent of the raw
+# Vinted Go status strings. The message includes a delivery window
+# when the integration was able to fill in ``planned_from``/``planned_to``,
+# otherwise just "today".
+
+alias: "Vinted Go: parcel out for delivery"
+description: Notify when a Vinted Go parcel goes out for delivery today.
+mode: queued
+max: 10
+
+triggers:
+  - trigger: event
+    event_type: vinted_go_parcel_status_changed
+    event_data:
+      new_status: out_for_delivery
+
+actions:
+  - action: notify.mobile_app
+    data:
+      title: "Parcel out for delivery today"
+      message: >-
+        {{ trigger.event.data.sender or trigger.event.data.barcode }} – expected
+        {% if trigger.event.data.planned_from and trigger.event.data.planned_to %}
+        between {{ as_timestamp(trigger.event.data.planned_from) | timestamp_custom('%H:%M') }}
+        and {{ as_timestamp(trigger.event.data.planned_to) | timestamp_custom('%H:%M') }}
+        {% else %}
+        today
+        {% endif %}
+      data:
+        clickAction: "{{ trigger.event.data.url }}"
