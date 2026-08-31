@@ -54,7 +54,6 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 
 ## Requirements
 
-- Home Assistant 2024.12 or newer
 - A Vinted Go account (the app's e-mail login — no password needed). If you buy or sell on Vinted in the Netherlands, Belgium, France, Spain or Portugal, your parcels are handled by Vinted Go.
 
 ## Installation
