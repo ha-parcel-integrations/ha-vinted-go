@@ -9,6 +9,9 @@
       "incoming_parcels": {
         "default": "mdi:package-variant-closed"
       },
+      "awaiting_pickup": {
+        "default": "mdi:store-clock"
+      },
       "delivered_parcels": {
         "default": "mdi:package-variant"
       },

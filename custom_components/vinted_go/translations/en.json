@@ -106,6 +106,10 @@
         "name": "Incoming parcels",
         "unit_of_measurement": "parcels"
       },
+      "awaiting_pickup": {
+        "name": "Awaiting pickup",
+        "unit_of_measurement": "parcels"
+      },
       "delivered_parcels": {
         "name": "Delivered parcels",
         "unit_of_measurement": "parcels"

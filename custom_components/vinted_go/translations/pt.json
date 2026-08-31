@@ -106,6 +106,10 @@
         "name": "Encomendas recebidas",
         "unit_of_measurement": "encomendas"
       },
+      "awaiting_pickup": {
+        "name": "A aguardar levantamento",
+        "unit_of_measurement": "encomendas"
+      },
       "delivered_parcels": {
         "name": "Encomendas entregues",
         "unit_of_measurement": "encomendas"

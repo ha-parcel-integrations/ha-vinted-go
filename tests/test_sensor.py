@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 from custom_components.vinted_go.const import ParcelStatus
 from custom_components.vinted_go.sensor import (
+    VintedGoAwaitingPickupSensor,
     VintedGoDeliveredParcelsSensor,
     VintedGoIncomingParcelsSensor,
     VintedGoLastUpdateSensor,
@@ -40,6 +41,23 @@ def test_incoming_summary():
     sensor = VintedGoIncomingParcelsSensor(coordinator, _entry(), lambda _: None, set())
     assert sensor.native_value == 2
     assert len(sensor.extra_state_attributes["parcels"]) == 2
+
+
+def test_awaiting_pickup_counts_only_ready_pickup_point_parcels():
+    ready = _parcel("A", ParcelStatus.AT_PICKUP_POINT)
+    ready["pickup"] = True
+    non_pickup_point = _parcel("B", ParcelStatus.IN_TRANSIT)
+    non_pickup_point["pickup"] = True
+    coordinator = _coordinator(data=[ready, non_pickup_point, _parcel("C", ParcelStatus.AT_PICKUP_POINT)])
+    sensor = VintedGoAwaitingPickupSensor(coordinator, _entry())
+    assert sensor.native_value == 1
+    assert sensor.extra_state_attributes["parcels"] == [ready]
+
+
+def test_awaiting_pickup_is_empty_without_parcels():
+    sensor = VintedGoAwaitingPickupSensor(_coordinator(), _entry())
+    assert sensor.native_value == 0
+    assert sensor.extra_state_attributes == {"parcels": []}
 
 
 def test_outgoing_summary():

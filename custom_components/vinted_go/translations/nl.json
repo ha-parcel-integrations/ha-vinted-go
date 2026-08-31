@@ -106,6 +106,10 @@
         "name": "Inkomende pakketten",
         "unit_of_measurement": "pakketten"
       },
+      "awaiting_pickup": {
+        "name": "Wacht op ophalen",
+        "unit_of_measurement": "pakketten"
+      },
       "delivered_parcels": {
         "name": "Bezorgde pakketten",
         "unit_of_measurement": "pakketten"
