@@ -50,14 +50,14 @@
           "history": {
             "name": "Pakketgeschiedenis",
             "data": {
-              "include_history": "Statusgeschiedenis meenemen"
+              "include_history": "Statusgeschiedenis toevoegen"
             },
             "data_description": {
-              "include_history": "Voegt per pakket een geschiedenis-attribuut toe met elke statusupdate (tijdstip, status, originele tekst). Standaard uit."
+              "include_history": "Voegt per pakket een geschiedenisattribuut toe met elke statusupdate (tijdstip, status, oorspronkelijke tekst). Standaard uit."
             }
           },
           "polling": {
-            "name": "Ophalen",
+            "name": "Verversen",
             "data": {
               "refresh_interval": "Ververs elke"
             },
@@ -107,7 +107,7 @@
         "unit_of_measurement": "pakketten"
       },
       "awaiting_pickup": {
-        "name": "Wacht op ophalen",
+        "name": "Klaar voor afhalen",
         "unit_of_measurement": "pakketten"
       },
       "delivered_parcels": {
