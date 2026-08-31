@@ -18,10 +18,9 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from . import VintedGoConfigEntry
-from .const import DOMAIN
+from .const import DOMAIN, ParcelStatus
 from .coordinator import VintedGoCoordinator
 from .device import ATTRIBUTION, build_device_info
-from .parcels import ParcelStatus
 
 _LOGGER = logging.getLogger(__name__)
 
