@@ -14,6 +14,7 @@ from custom_components.vinted_go.const import (
     CONF_REFRESH_TOKEN,
     CONF_USER_ID,
     DOMAIN,
+    REFRESH_INTERVAL_AUTO,
 )
 
 LINK = "https://app.vintedgo.com/auth/verify?token=ABC123"
@@ -73,6 +74,23 @@ async def test_full_login_flow(hass):
     }
     client.async_register.assert_awaited_once_with("fam@example.com")
     client.async_confirm.assert_awaited_once_with("ABC123")
+
+
+async def test_new_entry_defaults_refresh_interval_to_auto(hass):
+    """A newly created entry defaults to "auto" (dynamic-polling.md Section 5.2)."""
+    client = _mock_client()
+    with _patch(client):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": "user"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_EMAIL: "fam@example.com"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"token": LINK}
+        )
+
+    assert result["options"][CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
 
 
 async def test_register_cannot_connect(hass):
@@ -202,3 +220,55 @@ async def test_options_flow(hass):
     assert result["data"][CONF_REFRESH_INTERVAL] == 120
     assert result["data"][CONF_INCLUDE_HISTORY] is True
     assert result["data"][CONF_DELIVERED_FILTER_AMOUNT] == 5
+
+
+async def test_options_flow_accepts_auto_refresh_interval(hass):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="12345",
+        data={CONF_EMAIL: "a@b.c", CONF_REFRESH_TOKEN: "rt", CONF_USER_ID: 12345},
+        options={},
+    )
+    entry.add_to_hass(hass)
+    with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                "delivered": {
+                    CONF_DELIVERED_FILTER_TYPE: "parcels",
+                    CONF_DELIVERED_FILTER_AMOUNT: 5,
+                },
+                "history": {CONF_INCLUDE_HISTORY: False},
+                "polling": {CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO},
+            },
+        )
+    assert result["type"] == "create_entry"
+    assert result["data"][CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
+
+
+async def test_options_flow_existing_entry_keeps_numeric_value_when_resubmitted(hass):
+    """An existing entry created before "auto" existed keeps its numeric value
+    until the user actively changes it — resubmitting the same value is a
+    no-op, not an implicit switch to "auto"."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="12345",
+        data={CONF_EMAIL: "a@b.c", CONF_REFRESH_TOKEN: "rt", CONF_USER_ID: 12345},
+        options={CONF_REFRESH_INTERVAL: 30},
+    )
+    entry.add_to_hass(hass)
+    with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                "delivered": {
+                    CONF_DELIVERED_FILTER_TYPE: "parcels",
+                    CONF_DELIVERED_FILTER_AMOUNT: 5,
+                },
+                "history": {CONF_INCLUDE_HISTORY: False},
+                "polling": {CONF_REFRESH_INTERVAL: "30"},
+            },
+        )
+    assert result["data"][CONF_REFRESH_INTERVAL] == 30

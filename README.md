@@ -29,6 +29,7 @@ Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) 
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Options](#options)
+- [Dynamic polling](#dynamic-polling)
 - [Removal](#removal)
 - [Sensors](#sensors)
 - [Parcel status reference](#parcel-status-reference)
@@ -85,7 +86,33 @@ Open **Configure** on the integration entry:
 |---|---|---|---|
 | Delivered parcels | Filter by / amount | last 7 days | How long delivered parcels stay visible on the delivered sensors. |
 | Parcel history | Include status history | off | Adds a `history` attribute per parcel with each status update. |
-| Polling | Refresh every | 30 min | How often Vinted Go is checked. Slower is gentler on their API. |
+| Polling | Refresh every | Automatic | **Automatic**, or a fixed **15 / 30 / 60 / 120 / 240 minutes**. New installs default to Automatic; existing installs keep their current fixed value until changed. Changes take effect immediately, no HA restart needed. See [Dynamic polling](#dynamic-polling) below. |
+
+## Dynamic polling
+
+You can set **Refresh every** to **Automatic** instead of a fixed number of
+minutes. Instead of polling Vinted Go at the same rate around the clock, the
+integration adjusts its own cadence to what your parcels are actually doing:
+
+- **Quiet hours** — no polling between 00:00–06:00 local time, aside from one
+  catch-up check at each end of that window (around midnight and around 6
+  AM), so an overnight update is never missed.
+- **Hot (every 15 minutes)** — while any tracked incoming or outgoing parcel
+  is out for delivery. Vinted Go's API never returns an expected delivery
+  window, so this kicks in the moment a parcel goes out for delivery, not an
+  hour ahead of a known window like some other carriers in this suite.
+- **Normal (every 45 minutes)** otherwise — this is also the minimum cadence,
+  since it's the only way to discover a new shipment that appears on the
+  account without going through Home Assistant. Delivered parcels never
+  affect the cadence — only what's still in transit counts.
+- A small, fixed per-install offset is added on top, so not every Vinted Go
+  installation out there polls at exactly the same second.
+
+This is opt-in for now, but it's expected to become the default — and
+eventually the only — polling behaviour across the parcel-integrations
+suite. If you try Automatic, we'd genuinely like to hear how it goes: share
+your experience in [this
+discussion](https://github.com/orgs/ha-parcel-integrations/discussions/12).
 
 ## Removal
 

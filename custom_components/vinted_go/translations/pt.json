@@ -62,7 +62,7 @@
               "refresh_interval": "Atualizar a cada"
             },
             "data_description": {
-              "refresh_interval": "Com que frequência a integração verifica atualizações de encomendas no Vinted Go. Um intervalo mais lento é mais leve para a API do Vinted Go; a predefinição de 30 minutos é suficiente para a maioria das encomendas."
+              "refresh_interval": "Com que frequência a integração verifica atualizações de encomendas no Vinted Go. \"Automático\" (a predefinição para novas instalações) acelera perto de uma entrega prevista e abranda durante a noite; um intervalo fixo verifica a esse ritmo constante ao longo do dia."
             }
           }
         }
@@ -72,6 +72,7 @@
   "selector": {
     "refresh_interval": {
       "options": {
+        "auto": "Automático (recomendado)",
         "15": "15 minutos",
         "30": "30 minutos",
         "60": "60 minutos",

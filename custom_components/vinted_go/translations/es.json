@@ -62,7 +62,7 @@
               "refresh_interval": "Actualizar cada"
             },
             "data_description": {
-              "refresh_interval": "Con qué frecuencia la integración comprueba las actualizaciones de paquetes en Vinted Go. Un intervalo más lento es menos exigente para la API de Vinted Go; el valor predeterminado de 30 minutos es suficiente para la mayoría de los paquetes."
+              "refresh_interval": "Con qué frecuencia la integración comprueba las actualizaciones de paquetes en Vinted Go. \"Automático\" (el valor predeterminado para instalaciones nuevas) acelera cerca de una entrega prevista y ralentiza durante la noche; un intervalo fijo comprueba a ese ritmo constante durante todo el día."
             }
           }
         }
@@ -72,6 +72,7 @@
   "selector": {
     "refresh_interval": {
       "options": {
+        "auto": "Automático (recomendado)",
         "15": "15 minutos",
         "30": "30 minutos",
         "60": "60 minutos",

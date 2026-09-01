@@ -63,8 +63,35 @@ auto-imports every parcel (received and sent).
 
 The options flow is one sectioned form. **Account-based**, so it calls
 `async_schedule_reload` on submit and registers **no** update listener (combining
-a listener with a reload-on-update flow is deprecated, error in HA 2026.12+). The
-user-tunable poll interval is a deliberate HACS divergence (see CONVENTIONS.md).
+a listener with a reload-on-update flow is deprecated, error in HA 2026.12+).
+
+The user-tunable poll interval is a deliberate HACS divergence (see
+CONVENTIONS.md). `CONF_REFRESH_INTERVAL` = 15/30/60/120/240 min, default 30,
+plus `"auto"` (dynamic, status-driven polling — see below). New config
+entries default to `"auto"`; an entry created before this option existed
+keeps its numeric value untouched.
+
+**Dynamic polling (Phase 1 of `carrier-research/dynamic-polling.md`,
+account-based model, Section 2.2)** — `"auto"` is one more selectable
+`CONF_REFRESH_INTERVAL` value, not a replacement for the numeric options.
+When selected, the coordinator recomputes `update_interval` at the end of
+every `_async_update_data`: a 15 min hot tier the moment any active
+incoming *or* outgoing parcel is `out_for_delivery` (starting 1h before
+`planned_from`, or immediately if missing), a 45 min mid tier otherwise —
+which never stops, since the account call is the only way to discover a new
+shipment that appears without going through this integration — and a
+00:00–06:00 local-time quiet window with anchor polls at each end, plus a
+small deterministic per-`entry_id` stagger. `problem`/`returning` stay in
+the mid tier, not hot. **Vinted Go's shipment payload carries no ETA at
+all** (see the "No ETA" note above), so `planned_from` is always `None` —
+every `out_for_delivery` parcel takes the "no `planned_from`" branch
+straight to the hot tier; the 1h-lookahead branch is architecturally
+unreachable from real Vinted Go data, the same situation
+ha-quickpac/ha-sameday/ha-sunyou/ha-ppl-cz hit on their own conversions.
+Surfaced in diagnostics under `"polling"` (`current_tier_minutes`,
+`update_interval_seconds`). Do not build a Phase 2 (making `auto`
+unconditional / dropping the dropdown) without a separate maintainer
+decision — that is explicitly out of scope for this rollout.
 
 ## Module layout
 
