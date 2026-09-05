@@ -151,8 +151,7 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
                         # New installs default to dynamic polling; an entry
                         # set up before this option existed keeps reading
                         # DEFAULT_REFRESH_INTERVAL via the coordinator's
-                        # .get() fallback instead (dynamic-polling.md
-                        # Section 5.2).
+                        # .get() fallback instead (Section 5.2).
                         CONF_REFRESH_INTERVAL: DEFAULT_NEW_REFRESH_INTERVAL,
                         CONF_INCLUDE_HISTORY: DEFAULT_INCLUDE_HISTORY,
                     },
