@@ -10,18 +10,6 @@ A custom Home Assistant integration for your [Vinted Go](https://vintedgo.com) (
 
 Part of the [ha-parcel-integrations](https://github.com/ha-parcel-integrations) family: it publishes the same canonical parcel format, statuses and events as the other carrier integrations, so it plugs straight into the [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) and cross-carrier automations.
 
-> ### ⚠️ Early release — status vocabulary still collecting
->
-> Login, parcel auto-import (received and sent), polling and mapping all work,
-> confirmed on real accounts for both directions. What is still incomplete is
-> the **status vocabulary** — a few less common tokens (a successful final
-> collection on the receiving side, exception states like a lost or disposed
-> parcel) are still being observed from real parcels, so a state we do not map
-> yet reports **`unknown`** (never a wrong status) and logs a one-shot warning
-> with a ready-made issue link — please
-> [report it](https://github.com/ha-parcel-integrations/ha-vinted-go/issues/new?template=unrecognised_status.yml)
-> so the mapping can be completed.
-
 ## Contents
 
 - [Features](#features)
