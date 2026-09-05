@@ -20,10 +20,10 @@ conditions:
 actions:
   - action: notify.mobile_app
     data:
-      title: "Vinted Go klaar om op te halen"
+      title: "Vinted Go parcel ready for pickup"
       message: >-
-        {{ trigger.event.data.barcode }} ligt klaar
-        {{ ('bij ' ~ trigger.event.data.pickup_point)
+        {{ trigger.event.data.barcode }} is ready to collect
+        {{ ('at ' ~ trigger.event.data.pickup_point)
            if trigger.event.data.pickup_point else '' }}.
       data:
         clickAction: "{{ trigger.event.data.url }}"
