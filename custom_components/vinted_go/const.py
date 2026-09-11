@@ -95,18 +95,8 @@ CONF_DELIVERED_FILTER_AMOUNT = "delivered_filter_amount"
 DEFAULT_DELIVERED_FILTER_TYPE = "days"
 DEFAULT_DELIVERED_FILTER_AMOUNT = 7
 
-# Refresh interval (minutes). A user-tunable cadence is a deliberate divergence
-# from the HA Core "polling is not configurable" rule — wanted in a HACS parcel
-# tracker. Default 30 min keeps the account API gently loaded.
-CONF_REFRESH_INTERVAL = "refresh_interval"
-REFRESH_INTERVAL_AUTO = "auto"
-REFRESH_INTERVAL_OPTIONS = (15, 30, 60, 120, 240)
-DEFAULT_REFRESH_INTERVAL = 30  # minutes — default for entries that predate "auto"
-# New config entries default to "auto" (dynamic-polling rollout, Phase 1); an
-# existing entry keeps whatever it already has, numeric or "auto".
-DEFAULT_NEW_REFRESH_INTERVAL = REFRESH_INTERVAL_AUTO
-
-# Dynamic, status-driven polling — selected via "auto" above. Vinted Go's
+# Dynamic, status-driven polling — unconditional, no user-facing interval
+# option. Vinted Go's
 # shipment payload carries no ETA at all (see CAPABILITIES above — no
 # "delivery_window"), so the "1h
 # before planned_from" lookahead never has a value to compare against — an

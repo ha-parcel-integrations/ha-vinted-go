@@ -10,14 +10,14 @@ from custom_components.vinted_go.const import (
     CONF_DELIVERED_FILTER_TYPE,
     CONF_EMAIL,
     CONF_INCLUDE_HISTORY,
-    CONF_REFRESH_INTERVAL,
     CONF_REFRESH_TOKEN,
     CONF_USER_ID,
     DOMAIN,
-    REFRESH_INTERVAL_AUTO,
 )
 
 LINK = "https://app.vintedgo.com/auth/verify?token=ABC123"
+# The dropped Phase-1 polling option; asserted absent so it can't creep back.
+CONF_REFRESH_INTERVAL_KEY = "refresh_interval"
 
 
 def _mock_client(**overrides) -> MagicMock:
@@ -76,8 +76,8 @@ async def test_full_login_flow(hass):
     client.async_confirm.assert_awaited_once_with("ABC123")
 
 
-async def test_new_entry_defaults_refresh_interval_to_auto(hass):
-    """A newly created entry defaults to "auto" (dynamic-polling.md Section 5.2)."""
+async def test_new_entry_seeds_the_default_options(hass):
+    """A newly created entry seeds its options; polling is not among them."""
     client = _mock_client()
     with _patch(client):
         result = await hass.config_entries.flow.async_init(
@@ -90,7 +90,11 @@ async def test_new_entry_defaults_refresh_interval_to_auto(hass):
             result["flow_id"], {"token": LINK}
         )
 
-    assert result["options"][CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
+    assert result["options"] == {
+        CONF_DELIVERED_FILTER_TYPE: "days",
+        CONF_DELIVERED_FILTER_AMOUNT: 7,
+        CONF_INCLUDE_HISTORY: False,
+    }
 
 
 async def test_register_cannot_connect(hass):
@@ -213,21 +217,22 @@ async def test_options_flow(hass):
                     CONF_DELIVERED_FILTER_AMOUNT: 5,
                 },
                 "history": {CONF_INCLUDE_HISTORY: True},
-                "polling": {CONF_REFRESH_INTERVAL: "120"},
             },
         )
     assert result["type"] == "create_entry"
-    assert result["data"][CONF_REFRESH_INTERVAL] == 120
+    assert CONF_REFRESH_INTERVAL_KEY not in result["data"]
     assert result["data"][CONF_INCLUDE_HISTORY] is True
     assert result["data"][CONF_DELIVERED_FILTER_AMOUNT] == 5
 
 
-async def test_options_flow_accepts_auto_refresh_interval(hass):
+async def test_options_flow_ignores_a_stale_stored_refresh_interval(hass):
+    """An entry that still carries the dropped Phase-1 value submits fine and
+    the value is not written back."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         unique_id="12345",
         data={CONF_EMAIL: "a@b.c", CONF_REFRESH_TOKEN: "rt", CONF_USER_ID: 12345},
-        options={},
+        options={CONF_REFRESH_INTERVAL_KEY: 30},
     )
     entry.add_to_hass(hass)
     with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
@@ -240,35 +245,7 @@ async def test_options_flow_accepts_auto_refresh_interval(hass):
                     CONF_DELIVERED_FILTER_AMOUNT: 5,
                 },
                 "history": {CONF_INCLUDE_HISTORY: False},
-                "polling": {CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO},
             },
         )
     assert result["type"] == "create_entry"
-    assert result["data"][CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
-
-
-async def test_options_flow_existing_entry_keeps_numeric_value_when_resubmitted(hass):
-    """An existing entry created before "auto" existed keeps its numeric value
-    until the user actively changes it — resubmitting the same value is a
-    no-op, not an implicit switch to "auto"."""
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        unique_id="12345",
-        data={CONF_EMAIL: "a@b.c", CONF_REFRESH_TOKEN: "rt", CONF_USER_ID: 12345},
-        options={CONF_REFRESH_INTERVAL: 30},
-    )
-    entry.add_to_hass(hass)
-    with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
-        result = await hass.config_entries.options.async_init(entry.entry_id)
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"],
-            {
-                "delivered": {
-                    CONF_DELIVERED_FILTER_TYPE: "parcels",
-                    CONF_DELIVERED_FILTER_AMOUNT: 5,
-                },
-                "history": {CONF_INCLUDE_HISTORY: False},
-                "polling": {CONF_REFRESH_INTERVAL: "30"},
-            },
-        )
-    assert result["data"][CONF_REFRESH_INTERVAL] == 30
+    assert CONF_REFRESH_INTERVAL_KEY not in result["data"]

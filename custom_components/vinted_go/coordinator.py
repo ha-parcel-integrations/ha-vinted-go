@@ -20,18 +20,15 @@ from homeassistant.util import dt as dt_util
 from .api import VintedGoApiClient, VintedGoApiError, VintedGoAuthError
 from .const import (
     CONF_INCLUDE_HISTORY,
-    CONF_REFRESH_INTERVAL,
     CONTACT_TYPE_RECIPIENT,
     CONTACT_TYPE_SENDER,
     DEFAULT_INCLUDE_HISTORY,
-    DEFAULT_REFRESH_INTERVAL,
     DOMAIN,
     HOT_INTERVAL_MINUTES,
     HOT_LOOKAHEAD_HOURS,
     MID_INTERVAL_MINUTES,
     QUIET_WINDOW_END_HOUR,
     QUIET_WINDOW_START_HOUR,
-    REFRESH_INTERVAL_AUTO,
     STAGGER_MINUTES,
     ParcelStatus,
 )
@@ -43,25 +40,6 @@ from .parcels import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-
-def _refresh_setting(entry: ConfigEntry) -> str | int:
-    """Return the raw configured refresh setting — ``"auto"`` or a minute count."""
-    return entry.options.get(CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL)
-
-
-def _refresh_interval(entry: ConfigEntry) -> timedelta:
-    """Return the coordinator's *initial* update interval.
-
-    For a fixed setting this is the final word. For ``"auto"`` it is only a
-    starting point — the hot cadence, so the first poll after setup happens
-    promptly — since ``_async_update_data`` recomputes it every refresh via
-    ``_next_update_interval``.
-    """
-    setting = _refresh_setting(entry)
-    if setting == REFRESH_INTERVAL_AUTO:
-        return timedelta(minutes=HOT_INTERVAL_MINUTES)
-    return timedelta(minutes=int(setting))
 
 
 def _stagger_minutes(entry_id: str) -> int:
@@ -151,7 +129,10 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
             _LOGGER,
             config_entry=entry,
             name=DOMAIN,
-            update_interval=_refresh_interval(entry),
+            # Recomputed at the end of every refresh — start on the hot
+            # cadence so the first poll after setup happens promptly,
+            # whatever it turns out to find.
+            update_interval=timedelta(minutes=HOT_INTERVAL_MINUTES),
         )
         self._client = client
         self.delivered: list[dict] = []
@@ -168,14 +149,13 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
         self._known_outgoing_state: dict[str, ParcelStatus] | None = None
         self._cached_device_id: str | None = None
         self.last_success_time: datetime | None = None
-        # Tier last computed by _hottest_tier_minutes when the refresh
-        # setting is "auto" — surfaced in diagnostics. None when polling at a
-        # fixed interval instead.
+        # Tier last computed by _hottest_tier_minutes — surfaced in
+        # diagnostics. None until the first successful refresh.
         self._current_tier_minutes: int | None = None
 
     @property
     def current_tier_minutes(self) -> int | None:
-        """Tier minutes computed on the last "auto" refresh (diagnostics only)."""
+        """Tier minutes computed on the last refresh (diagnostics only)."""
         return self._current_tier_minutes
 
     def _device_id(self) -> str | None:
@@ -262,18 +242,13 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
 
         self.last_success_time = datetime.now(timezone.utc)
 
-        setting = _refresh_setting(self.config_entry)
-        if setting == REFRESH_INTERVAL_AUTO:
-            now = dt_util.now()
-            self._current_tier_minutes = _hottest_tier_minutes(
-                active_in + self.outgoing, now
-            )
-            self.update_interval = _next_update_interval(
-                now, self._current_tier_minutes, self.config_entry.entry_id
-            )
-        else:
-            self._current_tier_minutes = None
-            self.update_interval = timedelta(minutes=int(setting))
+        now = dt_util.now()
+        self._current_tier_minutes = _hottest_tier_minutes(
+            active_in + self.outgoing, now
+        )
+        self.update_interval = _next_update_interval(
+            now, self._current_tier_minutes, self.config_entry.entry_id
+        )
 
         return active_in
 

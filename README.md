@@ -75,13 +75,14 @@ Open **Configure** on the integration entry:
 |---|---|---|---|
 | Delivered parcels | Filter by / amount | last 7 days | How long delivered parcels stay visible on the delivered sensors. |
 | Parcel history | Include status history | off | Adds a `history` attribute per parcel with each status update. |
-| Polling | Refresh every | Automatic | **Automatic**, or a fixed **15 / 30 / 60 / 120 / 240 minutes**. New installs default to Automatic; existing installs keep their current fixed value until changed. Changes take effect immediately, no HA restart needed. See [Dynamic polling](#dynamic-polling) below. |
+
+Changing an option reloads the integration; there is no restart needed.
 
 ## Dynamic polling
 
-You can set **Refresh every** to **Automatic** instead of a fixed number of
-minutes. Instead of polling Vinted Go at the same rate around the clock, the
-integration adjusts its own cadence to what your parcels are actually doing:
+Polling isn't a setting here — instead of checking Vinted Go at the same rate
+around the clock, the integration adjusts its own cadence to what your parcels
+are actually doing:
 
 - **Quiet hours** — no polling between 00:00–06:00 local time, aside from one
   catch-up check at each end of that window (around midnight and around 6
@@ -97,11 +98,9 @@ integration adjusts its own cadence to what your parcels are actually doing:
 - A small, fixed per-install offset is added on top, so not every Vinted Go
   installation out there polls at exactly the same second.
 
-This is opt-in for now, but it's expected to become the default — and
-eventually the only — polling behaviour across the parcel-integrations
-suite. If you try Automatic, we'd genuinely like to hear how it goes: share
-your experience in [this
-discussion](https://github.com/orgs/ha-parcel-integrations/discussions/12).
+Installs that were still on a fixed interval move over automatically —
+nothing to change. This is now the polling behaviour across the
+parcel-integrations suite, where the cadence is no longer a setting anywhere.
 
 ## Removal
 
@@ -186,7 +185,7 @@ This integration is part of [**ha-parcel-integrations**](https://github.com/ha-p
 
 ## Disclaimer
 
-This integration uses the same account API as the Vinted Go app, with your own account. It is not affiliated with, endorsed by, or supported by Vinted Go. Be gentle with the polling interval.
+This integration uses the same account API as the Vinted Go app, with your own account. It is not affiliated with, endorsed by, or supported by Vinted Go.
 
 ## Contributing
 

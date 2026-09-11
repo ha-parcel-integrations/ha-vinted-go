@@ -1,5 +1,5 @@
-"""Tests for Phase 1's dynamic, status-driven polling (dynamic-polling.md
-Section 2.2, account-based model).
+"""Tests for the unconditional dynamic, status-driven polling
+(dynamic-polling.md Section 2.2, account-based model).
 
 Pure-function tests for the tiering/scheduling helpers, plus a few
 integration checks that ``_async_update_data`` actually wires them up.
@@ -13,14 +13,12 @@ from custom_components.vinted_go.const import (
     CONF_DELIVERED_FILTER_AMOUNT,
     CONF_DELIVERED_FILTER_TYPE,
     CONF_EMAIL,
-    CONF_REFRESH_INTERVAL,
     CONF_REFRESH_TOKEN,
     CONF_USER_ID,
     CONTACT_TYPE_RECIPIENT,
     DOMAIN,
     HOT_INTERVAL_MINUTES,
     MID_INTERVAL_MINUTES,
-    REFRESH_INTERVAL_AUTO,
     STAGGER_MINUTES,
     ParcelStatus,
 )
@@ -30,8 +28,6 @@ from custom_components.vinted_go.coordinator import (
     _in_quiet_window,
     _next_anchor,
     _next_update_interval,
-    _refresh_interval,
-    _refresh_setting,
     _stagger_minutes,
 )
 
@@ -72,21 +68,6 @@ def _ship(code, contact_type, group, ts, resolution=None):
 # ---------------------------------------------------------------------------
 
 UTC = timezone.utc
-
-
-def test_refresh_interval_reads_minutes_from_options():
-    entry = _entry(**{CONF_REFRESH_INTERVAL: 120})
-    assert _refresh_interval(entry).total_seconds() == 120 * 60
-
-
-def test_refresh_interval_starts_hot_when_auto():
-    entry = _entry(**{CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO})
-    assert _refresh_interval(entry).total_seconds() == HOT_INTERVAL_MINUTES * 60
-
-
-def test_refresh_setting_passes_through_auto():
-    entry = _entry(**{CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO})
-    assert _refresh_setting(entry) == REFRESH_INTERVAL_AUTO
 
 
 def test_quiet_window_is_midnight_to_six():
@@ -193,9 +174,19 @@ def test_candidate_landing_in_quiet_window_clamps_to_the_midnight_anchor():
 # ---------------------------------------------------------------------------
 
 
-async def test_auto_mode_recomputes_interval_and_never_stops(hass):
+async def test_coordinator_starts_on_the_hot_cadence(hass):
+    """update_interval is seeded hot so the first poll after setup is prompt."""
+    entry = _entry()
+    entry.add_to_hass(hass)
+    coord = VintedGoCoordinator(hass, _client([], {}), entry)
+
+    assert coord.update_interval == timedelta(minutes=HOT_INTERVAL_MINUTES)
+    assert coord.current_tier_minutes is None
+
+
+async def test_recomputes_interval_and_never_stops(hass):
     """Zero pending parcels must not suspend polling — it's the only discovery path."""
-    entry = _entry(**{CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO})
+    entry = _entry()
     entry.add_to_hass(hass)
     coord = VintedGoCoordinator(hass, _client([], {}), entry)
 
@@ -205,8 +196,8 @@ async def test_auto_mode_recomputes_interval_and_never_stops(hass):
     assert coord.update_interval is not None
 
 
-async def test_auto_mode_goes_hot_for_out_for_delivery(hass):
-    entry = _entry(**{CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO})
+async def test_goes_hot_for_out_for_delivery(hass):
+    entry = _entry()
     entry.add_to_hass(hass)
     s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_delivery", "2026-07-29T10:00:00Z")
     coord = VintedGoCoordinator(hass, _client([s_in], {IN: t_in}), entry)
@@ -216,8 +207,8 @@ async def test_auto_mode_goes_hot_for_out_for_delivery(hass):
     assert coord.current_tier_minutes == HOT_INTERVAL_MINUTES
 
 
-async def test_auto_mode_stays_mid_for_in_transit_only(hass):
-    entry = _entry(**{CONF_REFRESH_INTERVAL: REFRESH_INTERVAL_AUTO})
+async def test_stays_mid_for_in_transit_only(hass):
+    entry = _entry()
     entry.add_to_hass(hass)
     s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-29T10:00:00Z")
     coord = VintedGoCoordinator(hass, _client([s_in], {IN: t_in}), entry)
@@ -225,14 +216,3 @@ async def test_auto_mode_stays_mid_for_in_transit_only(hass):
     await coord._async_update_data()
 
     assert coord.current_tier_minutes == MID_INTERVAL_MINUTES
-
-
-async def test_fixed_mode_keeps_configured_interval(hass):
-    entry = _entry(**{CONF_REFRESH_INTERVAL: 60})
-    entry.add_to_hass(hass)
-    coord = VintedGoCoordinator(hass, _client([], {}), entry)
-
-    await coord._async_update_data()
-
-    assert coord.current_tier_minutes is None
-    assert coord.update_interval == timedelta(minutes=60)

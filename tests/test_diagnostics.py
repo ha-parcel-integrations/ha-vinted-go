@@ -11,7 +11,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     """Diagnostics get pasted into public issues — nothing identifying survives."""
     entry = MagicMock()
     entry.data = {"email": "fam@example.com", "refresh_token": "secret", "user_id": 12345}
-    entry.options = {"refresh_interval": 30}
+    entry.options = {"include_history": False}
     parcel = {
         "barcode": "VGS1",
         "status": "in_transit",
@@ -53,7 +53,7 @@ async def test_diagnostics_polling_handles_no_update_interval(hass):
     also be ``None`` (e.g. before the first successful refresh)."""
     entry = MagicMock()
     entry.data = {"email": "fam@example.com"}
-    entry.options = {"refresh_interval": 30}
+    entry.options = {"include_history": False}
     entry.runtime_data.coordinator.data = []
     entry.runtime_data.coordinator.delivered = []
     entry.runtime_data.coordinator.outgoing = []

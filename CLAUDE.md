@@ -19,7 +19,7 @@ you act in one of these areas:
 | touch entities, sensors, config/options flow, coordinator, diagnostics, translations | *Home Assistant developer docs* (its table points on to the canonical HA page — don't rely on memory) |
 | add/rename a parcel field, a `ParcelStatus`, or a bus event; change the sort/first-refresh; touch unmapped-status logging | *Parcel contract* — key set, units, sort, events + suppression; `test_parcels.py::test_normalize_publishes_exactly_the_canonical_keys` guards the key set |
 | ship anything while below 1.0.0 (inferred statuses) | *Pre-1.0 releases* — one-shot WARNINGs for every guessed status |
-| consider "fixing" a lint/pattern the skill flags (poll interval, inline client) | *Deliberate skill divergences* |
+| consider "fixing" a lint/pattern the skill flags (inline client) | *Deliberate skill divergences* |
 | commit, bump, tag, release, or write release notes; add a feature without a test | *Workflow / Commits / Versioning / Testing* |
 
 **API mechanics live in `carrier-research/vinted-go/api/` (private research repo)** — the passwordless
@@ -31,6 +31,15 @@ and identical in every carrier — the authoritative spec is
 [`ha-carrier-template/scaffold/CLAUDE.md`](https://github.com/ha-parcel-integrations/ha-carrier-template/blob/main/scaffold/CLAUDE.md).
 Where this repo diverges from it, that is recorded below under
 *Divergences from the scaffold*.
+
+**Polling cadence is not configurable — don't add the option back.** The
+Section 2.2 account-based algorithm always runs: `_async_update_data` recomputes
+`update_interval` at the end of every refresh (quiet window 00:00–06:00 with two
+anchors, hot 15 min / mid 45 min, never a full stop because the mid-tier poll is
+also how a new shipment on the account gets discovered, plus a per-install
+stagger). The `refresh_interval` dropdown (Phase 1, 1.1.0) is gone; a stale
+stored value is never read. The options flow has two sections left, `delivered`
+and `history`.
 
 **Suite-wide tripwires, kept inline on purpose:**
 - **First refresh in `__init__.py`, before `async_forward_entry_setups`** — from
@@ -70,19 +79,22 @@ auto-imports every parcel (received and sent).
 Everything not listed here follows the scaffold exactly.
 
 *Options and reloads* — account-based, so `async_schedule_reload` on submit
-with **no** update listener. Unlike the scaffold's no-interval model this
-carrier exposes `CONF_REFRESH_INTERVAL` = 15/30/60/120/240 min (default 30)
-plus `"auto"`; new entries default to `"auto"`, pre-existing entries keep their
-numeric value. Do not build a Phase 2 (making `auto` unconditional) without a
-separate maintainer decision.
+with **no** update listener. That is the whole divergence now: the interval
+half is gone. `CONF_REFRESH_INTERVAL` (15/30/60/120/240 min plus `"auto"`,
+Phase 1, 1.1.0) was removed in the Phase 2 convergence (maintainer decision
+2026-09-12, every remaining Phase-1 carrier goes unconditional), so this
+carrier matches the scaffold's no-interval model — see the tripwire above;
+don't add the option back.
 
 *Dynamic polling* — **Vinted Go's shipment payload carries no ETA at all** (see
 "No ETA" above), so `planned_from` is always `None`: every `out_for_delivery`
 parcel takes the "no `planned_from`" branch straight to the hot tier, and the
 1h-lookahead branch is architecturally unreachable from real data — the same
-situation `ha-quickpac`/`ha-sameday`/`ha-sunyou`/`ha-ppl-cz` hit. The tier is
-surfaced in diagnostics under `"polling"` (`current_tier_minutes`,
-`update_interval_seconds`), recomputed at the end of every `_async_update_data`.
+situation `ha-quickpac`/`ha-sameday`/`ha-sunyou`/`ha-ppl-cz` hit. Its tests
+therefore exercise that branch with hand-built dicts / a patched tier helper
+rather than an invented ETA payload. The tier is surfaced in diagnostics under
+`"polling"` (`current_tier_minutes`, `update_interval_seconds`), recomputed at
+the end of every `_async_update_data`.
 
 ## Running tests
 

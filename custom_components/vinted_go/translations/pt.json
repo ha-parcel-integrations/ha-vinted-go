@@ -55,31 +55,12 @@
             "data_description": {
               "include_history": "Adiciona um atributo de histórico por encomenda com cada atualização de estado (data/hora, estado, texto original). Desativado por predefinição."
             }
-          },
-          "polling": {
-            "name": "Atualização",
-            "data": {
-              "refresh_interval": "Atualizar a cada"
-            },
-            "data_description": {
-              "refresh_interval": "Com que frequência a integração verifica atualizações de encomendas no Vinted Go. \"Automático\" (a predefinição para novas instalações) acelera perto de uma entrega prevista e abranda durante a noite; um intervalo fixo verifica a esse ritmo constante ao longo do dia."
-            }
           }
         }
       }
     }
   },
   "selector": {
-    "refresh_interval": {
-      "options": {
-        "auto": "Automático (recomendado)",
-        "15": "15 minutos",
-        "30": "30 minutos",
-        "60": "60 minutos",
-        "120": "120 minutos",
-        "240": "240 minutos"
-      }
-    },
     "delivered_filter_type": {
       "options": {
         "days": "Dias",

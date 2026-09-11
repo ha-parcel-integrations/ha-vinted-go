@@ -29,17 +29,12 @@ from .const import (
     CONF_DELIVERED_FILTER_TYPE,
     CONF_EMAIL,
     CONF_INCLUDE_HISTORY,
-    CONF_REFRESH_INTERVAL,
     CONF_REFRESH_TOKEN,
     CONF_USER_ID,
     DEFAULT_DELIVERED_FILTER_AMOUNT,
     DEFAULT_DELIVERED_FILTER_TYPE,
     DEFAULT_INCLUDE_HISTORY,
-    DEFAULT_NEW_REFRESH_INTERVAL,
-    DEFAULT_REFRESH_INTERVAL,
     DOMAIN,
-    REFRESH_INTERVAL_AUTO,
-    REFRESH_INTERVAL_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -62,16 +57,6 @@ def extract_token(value: str) -> str:
     return value
 
 
-def _interval_selector() -> selector.SelectSelector:
-    """Return the refresh-interval dropdown selector."""
-    return selector.SelectSelector(
-        selector.SelectSelectorConfig(
-            options=[REFRESH_INTERVAL_AUTO]
-            + [str(m) for m in REFRESH_INTERVAL_OPTIONS],
-            translation_key=CONF_REFRESH_INTERVAL,
-            mode=selector.SelectSelectorMode.DROPDOWN,
-        )
-    )
 
 
 class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -148,11 +133,6 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
                     options={
                         CONF_DELIVERED_FILTER_TYPE: DEFAULT_DELIVERED_FILTER_TYPE,
                         CONF_DELIVERED_FILTER_AMOUNT: DEFAULT_DELIVERED_FILTER_AMOUNT,
-                        # New installs default to dynamic polling; an entry
-                        # set up before this option existed keeps reading
-                        # DEFAULT_REFRESH_INTERVAL via the coordinator's
-                        # .get() fallback instead (Section 5.2).
-                        CONF_REFRESH_INTERVAL: DEFAULT_NEW_REFRESH_INTERVAL,
                         CONF_INCLUDE_HISTORY: DEFAULT_INCLUDE_HISTORY,
                     },
                 )
@@ -194,7 +174,11 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
 
 
 class VintedGoOptionsFlowHandler(OptionsFlow):
-    """Delivered-retention, history and polling — one sectioned form."""
+    """Delivered-retention and history — one sectioned form.
+
+    Polling cadence is not configurable — the coordinator drives it from
+    what the tracked parcels are doing.
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -203,8 +187,7 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
         if user_input is not None:
             delivered = user_input["delivered"]
             history = user_input["history"]
-            polling = user_input["polling"]
-            # Reload so a changed interval / retention takes effect immediately;
+            # Reload so a changed option takes effect immediately;
             # no update listener (deprecated alongside reload-on-update).
             self.hass.config_entries.async_schedule_reload(
                 self.config_entry.entry_id
@@ -217,11 +200,6 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
                         delivered[CONF_DELIVERED_FILTER_AMOUNT]
                     ),
                     CONF_INCLUDE_HISTORY: bool(history[CONF_INCLUDE_HISTORY]),
-                    CONF_REFRESH_INTERVAL: (
-                        REFRESH_INTERVAL_AUTO
-                        if polling[CONF_REFRESH_INTERVAL] == REFRESH_INTERVAL_AUTO
-                        else int(polling[CONF_REFRESH_INTERVAL])
-                    ),
                 },
             )
 
@@ -269,21 +247,6 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
                                     CONF_INCLUDE_HISTORY, DEFAULT_INCLUDE_HISTORY
                                 ),
                             ): selector.BooleanSelector(),
-                        }
-                    ),
-                    {"collapsed": True},
-                ),
-                vol.Required("polling"): section(
-                    vol.Schema(
-                        {
-                            vol.Required(
-                                CONF_REFRESH_INTERVAL,
-                                default=str(
-                                    current.get(
-                                        CONF_REFRESH_INTERVAL, DEFAULT_REFRESH_INTERVAL
-                                    )
-                                ),
-                            ): _interval_selector(),
                         }
                     ),
                     {"collapsed": True},
