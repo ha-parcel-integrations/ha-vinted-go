@@ -1,5 +1,5 @@
 """Tests for the unconditional dynamic, status-driven polling
-(dynamic-polling.md Section 2.2, account-based model).
+(account-based model).
 
 Pure-function tests for the tiering/scheduling helpers, plus a few
 integration checks that ``_async_update_data`` actually wires them up.
@@ -63,7 +63,7 @@ def _ship(code, contact_type, group, ts, resolution=None):
 
 
 # ---------------------------------------------------------------------------
-# Dynamic polling (dynamic-polling.md Section 2.2, account-based) — pure
+# Dynamic polling (account-based) — pure
 # helpers
 # ---------------------------------------------------------------------------
 
