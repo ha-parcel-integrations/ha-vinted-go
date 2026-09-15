@@ -73,6 +73,11 @@ auto-imports every parcel (received and sent).
   the two in agreement if that ever changes. **Direction**
   (received/sent) splits incoming from outgoing; it lives under `raw`, not a
   canonical field. Unmapped status → `unknown` + one-shot warning.
+- **Pickup-point shape confirmed** (issue #8): a real parcel's `point` carries
+  `address`, `city`, `code`, `country_code`, `latitude`, `longitude`, `name`,
+  `on_vacation_until`, `opening_hours`, `postal_code`. `normalize_parcel` only
+  reads `name`; the one-shot warning now fires solely when a populated `point`
+  lacks it (an actual gap, not an unconfirmed shape).
 
 ## Divergences from the scaffold
 

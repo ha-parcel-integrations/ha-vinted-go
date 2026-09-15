@@ -105,33 +105,26 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
 # only once per HA session instead of on every poll.
 _unmapped_statuses_logged: set[str] = set()
 
-# We have never seen a populated ``point`` (pickup location) in live data, so we
-# log its shape once when a real parcel first carries one — a pre-1.0 "help us
-# confirm this" signal. Keys only, never values (a point is an address).
-_point_shape_logged = False
+# Confirmed shape (issue #8): {address, city, code, country_code, latitude,
+# longitude, name, on_vacation_until, opening_hours, postal_code}, always
+# carrying ``name``. Only the no-``name`` shape (never seen, but not ruled
+# out — the account payload's field set isn't guaranteed stable) still needs a
+# report, since a point without one silently blanks ``pickup_point``.
+_point_without_name_logged = False
 
 
 def _note_point_shape(point: dict) -> None:
-    """One-shot: report the pickup-point structure so a tester can confirm it."""
-    global _point_shape_logged
-    if _point_shape_logged:
+    """One-shot: flag a pickup point missing ``name`` — its shape is otherwise confirmed."""
+    global _point_without_name_logged
+    if point.get("name") or _point_without_name_logged:
         return
-    _point_shape_logged = True
-    keys = sorted(point.keys())
-    if point.get("name"):
-        _LOGGER.warning(
-            "Vinted Go pickup point seen for the first time (fields=%s) — we've "
-            "not confirmed this shape against real data. Please help us verify it: %s",
-            keys,
-            NEW_ISSUE_URL,
-        )
-    else:
-        _LOGGER.warning(
-            "Vinted Go pickup point present but no 'name' field (fields=%s) — the "
-            "point name will be blank. Please report so we can map it: %s",
-            keys,
-            NEW_ISSUE_URL,
-        )
+    _point_without_name_logged = True
+    _LOGGER.warning(
+        "Vinted Go pickup point present but no 'name' field (fields=%s) — the "
+        "point name will be blank. Please report so we can map it: %s",
+        sorted(point.keys()),
+        NEW_ISSUE_URL,
+    )
 
 
 def _warn_unmapped_status(code: str) -> None:

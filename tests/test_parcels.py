@@ -198,26 +198,25 @@ def test_normalize_keeps_raw_payload():
     assert normalize_parcel(raw)["raw"] is raw
 
 
-def test_point_shape_logged_once_with_name(caplog):
+def test_point_with_name_does_not_warn(caplog):
     import custom_components.vinted_go.parcels as parcels_mod
 
-    parcels_mod._point_shape_logged = False
+    parcels_mod._point_without_name_logged = False
     raw = parcel_raw("VGS1", point={"name": "Central Station", "address": "x"})
     normalize_parcel(raw)
-    normalize_parcel(parcel_raw("VGS2", point={"name": "Other"}))  # one-shot
-    assert caplog.text.count("pickup point seen for the first time") == 1
-    assert "fields=['address', 'name']" in caplog.text
-    assert "issues/new" in caplog.text
-    assert "WARNING" in caplog.text
+    assert "pickup point" not in caplog.text
 
 
-def test_point_without_name_warns(caplog):
+def test_point_without_name_warns_once(caplog):
     import custom_components.vinted_go.parcels as parcels_mod
 
-    parcels_mod._point_shape_logged = False
+    parcels_mod._point_without_name_logged = False
     normalize_parcel(parcel_raw("VGS1", point={"label": "Central Station"}))
-    assert "no 'name' field" in caplog.text
+    normalize_parcel(parcel_raw("VGS2", point={"label": "Other"}))  # one-shot
+    assert caplog.text.count("no 'name' field") == 1
     assert "fields=['label']" in caplog.text
+    assert "issues/new" in caplog.text
+    assert "WARNING" in caplog.text
 
 
 # --- sort / filter ----------------------------------------------------------

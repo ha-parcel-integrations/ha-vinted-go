@@ -23,7 +23,7 @@ def reset_one_shot_warnings():
     from custom_components.vinted_go import parcels
 
     parcels._unmapped_statuses_logged.clear()
-    parcels._point_shape_logged = False
+    parcels._point_without_name_logged = False
     parcels._unmapped_contact_types_logged.clear()
     yield
 
