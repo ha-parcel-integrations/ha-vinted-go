@@ -89,7 +89,7 @@
         "unit_of_measurement": "paquetes"
       },
       "awaiting_pickup": {
-        "name": "Pendiente de recogida",
+        "name": "Listo para recoger",
         "unit_of_measurement": "paquetes"
       },
       "delivered_parcels": {

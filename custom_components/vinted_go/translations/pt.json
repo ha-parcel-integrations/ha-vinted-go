@@ -89,7 +89,7 @@
         "unit_of_measurement": "encomendas"
       },
       "awaiting_pickup": {
-        "name": "A aguardar levantamento",
+        "name": "Pronta para recolha",
         "unit_of_measurement": "encomendas"
       },
       "delivered_parcels": {
