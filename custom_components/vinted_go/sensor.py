@@ -181,8 +181,7 @@ class VintedGoAwaitingPickupSensor(_SummarySensor):
         return [
             parcel
             for parcel in (self.coordinator.data or [])
-            if parcel.get("pickup")
-            and parcel.get("status") == ParcelStatus.AT_PICKUP_POINT
+            if parcel.get("status") == ParcelStatus.AT_PICKUP_POINT
         ]
 
 
