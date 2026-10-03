@@ -178,9 +178,12 @@ logger:
 
 ## Related integrations
 
-This integration is part of [**ha-parcel-integrations**](https://ha-parcel-integrations.github.io/) — a family of parcel-carrier integrations that all publish the same canonical parcel format, statuses and events.
+This integration is part of [**ha-parcel-integrations**](https://ha-parcel-integrations.github.io/) — a family of
+parcel-carrier integrations that all publish the same canonical parcel format,
+statuses and events.
 
-- [**Parcel Aggregator**](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) rolls every installed carrier up into one set of sensors.
+- [**Parcel Aggregator**](https://github.com/ha-parcel-integrations/ha-parcel-aggregator) rolls every installed carrier
+  up into one set of sensors.
 - Browse [the organisation](https://ha-parcel-integrations.github.io/) for the current list of supported carriers.
 
 ## Disclaimer
