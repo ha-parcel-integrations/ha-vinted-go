@@ -14,6 +14,7 @@ unmapped statuses — is suite-wide machinery and should be left alone.
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -24,6 +25,7 @@ from .const import (
     CONF_DELIVERED_FILTER_TYPE,
     DEFAULT_DELIVERED_FILTER_AMOUNT,
     DEFAULT_DELIVERED_FILTER_TYPE,
+    GLS_TRACKING_URL,
     HISTORY_MAX_EVENTS,
     TRACKING_URL,
     ParcelStatus,
@@ -296,6 +298,30 @@ def tracking_url(tracking_code: str | None) -> str | None:
     return TRACKING_URL.format(tracking_code=tracking_code)
 
 
+# The relabel event carries the new code only in its message text; a GLS
+# parcel number is exactly 12 digits, which rules out the routing-label junk
+# other relabels contain.
+_GLS_CODE_RE = re.compile(r"(?<!\d)(\d{12})(?!\d)")
+
+
+def gls_handover_url(raw: dict, events: list) -> str | None:
+    """GLS deep-link when the parcel was relabelled for GLS, else ``None``."""
+    point = raw.get("point")
+    if not isinstance(point, dict) or "GLS" not in (point.get("name") or "").upper():
+        return None
+    valid = [ev for ev in events if isinstance(ev, dict)]
+    for ev in sorted(
+        valid,
+        key=lambda e: parse_iso(e.get("timestamp"))
+        or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    ):
+        match = _GLS_CODE_RE.search(ev.get("message") or "")
+        if match:
+            return GLS_TRACKING_URL.format(code=match.group(1))
+    return None
+
+
 def latest_event(events: list | None) -> dict | None:
     """Return the most recent event (by timestamp) from a Vinted Go timeline.
 
@@ -376,7 +402,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         "planned_to": None,
         "pickup": status is ParcelStatus.AT_PICKUP_POINT,
         "pickup_point": pickup_point or None,
-        "url": tracking_url(tracking_code),
+        "url": gls_handover_url(raw, events) or tracking_url(tracking_code),
         "weight": None,
         "dimensions": None,
         "history": build_history(events) if include_history else None,

@@ -269,3 +269,49 @@ def test_capabilities_are_known_values():
 def test_capabilities_are_pickup_point_url_and_history():
     """The account payload carries the service point but no ETA/weight/dimensions."""
     assert CAPABILITIES == {"pickup_point", "url", "history"}
+
+
+_GLS_HUB = {"code": "NL100402", "name": "GLS NL HUB", "country_code": "DE"}
+
+
+def _relabelled(message: str, point: dict | None = _GLS_HUB) -> dict:
+    raw = parcel_raw("VGS1", contact_type="sender", point=point)
+    raw["tracking_events"] = [
+        *raw["tracking_events"],
+        event("in_transit", "2026-09-04T07:07:36.845Z", message),
+        event("in_transit", "2026-09-04T07:07:39.939Z", "At sorting center in Breda, NL"),
+    ]
+    return raw
+
+
+def test_url_points_at_gls_after_a_gls_relabel():
+    parcel = normalize_parcel(
+        _relabelled("Shipment was relabelled, new tracking code is 481526443127")
+    )
+
+    assert parcel["url"] == (
+        "https://gls-group.com/GROUP/en/parcel-tracking?match=481526443127"
+    )
+    assert parcel["status"] == ParcelStatus.IN_TRANSIT
+
+
+def test_url_stays_vinted_go_when_the_relabel_code_is_not_a_gls_number():
+    parcel = normalize_parcel(
+        _relabelled(
+            "Shipment was relabelled, new tracking code is ADE 480DE "
+            "1322760361927276a45fUp2ZC6J929FBBn 1 310139106 00100001001910102024"
+        )
+    )
+
+    assert parcel["url"].startswith("https://vintedgo.com/")
+
+
+def test_url_stays_vinted_go_without_a_gls_point():
+    parcel = normalize_parcel(
+        _relabelled(
+            "Shipment was relabelled, new tracking code is 481526443127",
+            point={"name": "Vinted Go Point Central Station"},
+        )
+    )
+
+    assert parcel["url"].startswith("https://vintedgo.com/")

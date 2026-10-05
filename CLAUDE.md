@@ -77,8 +77,19 @@ auto-imports every parcel (received and sent).
   keeps a disposed/lost/cancelled shipment on the account indefinitely, so the
   coordinator drops any non-delivered parcel with `status_group == "completed"`
   from the active lists. It stays in the event pass, so the hop to `problem`
-  fires once first; a shipment that reopens reappears on the next poll. That
-  `completed` means "closed for good" is inferred from one disposed payload.
+  fires once first; a shipment that reopens reappears on the next poll.
+  `completed` was seen on a disposed (`resolution: null`, #10) and a lost
+  (`resolution: lost`, #11) shipment — that it means "closed for good" is
+  still inferred, not documented.
+- **GLS handover** (issue #11). Cross-border parcels are relabelled at the hub
+  and handed to GLS (`point.name` "GLS NL HUB"); Vinted Go's timeline then
+  stops, so the status stays `in_transit` — that is honest, not a mapping
+  gap. When the point is a GLS one and an event message carries a 12-digit
+  code, `url` becomes the GLS group tracking link for it. The code exists only
+  in the message text; other relabels carry routing-label junk, hence the
+  strict 12-digit match. Whether `tracking_code` itself is replaced by the GLS
+  number is unclear (the #11 report was inconsistently redacted). Don't call
+  GLS from here — no inter-repo code; the README points users at ha-gls.
 - **Multi-account.** No `single_config_entry`: the Vinted Go user id is the
   entry's unique_id, so a second account is allowed and the same account twice
   aborts `already_configured`. Everything is keyed by `entry_id` (device,

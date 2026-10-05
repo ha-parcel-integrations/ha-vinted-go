@@ -178,6 +178,7 @@ logger:
 ## Troubleshooting
 
 - **Home Assistant asks me to reconnect Vinted Go** — the login session could not be renewed (e.g. it was revoked). Follow the reauth prompt: enter your e-mail and paste the fresh verification link.
+- **A parcel sent abroad stays `in_transit`** — Vinted Go hands cross-border parcels to GLS at its hub and relabels them with a GLS parcel number; after that Vinted Go's own tracking stops updating. The parcel's `url` then points at GLS tracking for the new number. To follow it in Home Assistant, add that number with the [GLS integration](https://github.com/ha-parcel-integrations/ha-gls)'s `gls.track_parcel` action.
 - **A parcel shows `unknown`** — Vinted Go has not scanned it yet, or reports a status we do not map. If a status logs "Unrecognised Vinted Go status", please [open an issue](https://github.com/ha-parcel-integrations/ha-vinted-go/issues/new) with the logged line so the mapping can be extended.
 
 ## Related integrations

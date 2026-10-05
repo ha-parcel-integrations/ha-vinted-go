@@ -74,6 +74,10 @@ TRACKING_URL = (
     "https://vintedgo.com/en/tracking/{tracking_code}?country=nl&region=europe"
 )
 
+# A cross-border parcel is relabelled at the hub and handed to GLS, after which
+# Vinted Go's own timeline stops moving.
+GLS_TRACKING_URL = "https://gls-group.com/GROUP/en/parcel-tracking?match={code}"
+
 # --- Config entry data -------------------------------------------------------
 # The account e-mail (display only) and the persisted refresh token; the numeric
 # Vinted Go user id is the entry's unique_id so the same account can't be added
