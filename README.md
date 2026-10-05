@@ -67,6 +67,8 @@ Add the integration via **Settings → Devices & Services → Add Integration �
 
 That's it — no password. Your parcels are imported automatically and refreshed on a schedule. The session renews itself silently; you only log in again if Home Assistant asks you to (a rare **reauth** prompt).
 
+You can add more than one Vinted Go account — repeat the steps with another e-mail address. Each account gets its own device, named **`Vinted Go (<your-email>)`**, and its own sensors. Adding the same account twice is refused.
+
 ## Options
 
 Open **Configure** on the integration entry:

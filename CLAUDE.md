@@ -73,6 +73,10 @@ auto-imports every parcel (received and sent).
   the two in agreement if that ever changes. **Direction**
   (received/sent) splits incoming from outgoing; it lives under `raw`, not a
   canonical field. Unmapped status → `unknown` + one-shot warning.
+- **Multi-account.** No `single_config_entry`: the Vinted Go user id is the
+  entry's unique_id, so a second account is allowed and the same account twice
+  aborts `already_configured`. Everything is keyed by `entry_id` (device,
+  entity unique_ids, coordinator state) — keep it that way.
 - **Pickup-point shape confirmed** (issue #8): a real parcel's `point` carries
   `address`, `city`, `code`, `country_code`, `latitude`, `longitude`, `name`,
   `on_vacation_until`, `opening_hours`, `postal_code`. `normalize_parcel` only

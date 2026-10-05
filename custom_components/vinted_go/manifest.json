@@ -11,6 +11,5 @@
   "issue_tracker": "https://github.com/ha-parcel-integrations/ha-vinted-go/issues",
   "quality_scale": "silver",
   "requirements": [],
-  "single_config_entry": true,
   "version": "1.2.3"
 }

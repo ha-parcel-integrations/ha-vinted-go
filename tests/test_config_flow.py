@@ -128,14 +128,40 @@ async def test_invalid_token(hass):
     assert result["errors"] == {"base": "invalid_token"}
 
 
-async def test_single_instance_only(hass):
-    """single_config_entry aborts a second account at flow start."""
+async def test_second_account_allowed(hass):
+    """A different Vinted Go account can be added next to an existing one."""
+    MockConfigEntry(domain=DOMAIN, unique_id="99999").add_to_hass(hass)
+    client = _mock_client()
+    with _patch(client):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": "user"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_EMAIL: "a@b.c"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"token": LINK}
+        )
+    assert result["type"] == "create_entry"
+    assert len(hass.config_entries.async_entries(DOMAIN)) == 2
+
+
+async def test_same_account_twice_aborts(hass):
+    """The account's user id is the unique_id, so a duplicate login aborts."""
     MockConfigEntry(domain=DOMAIN, unique_id="12345").add_to_hass(hass)
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN, context={"source": "user"}
-    )
+    client = _mock_client()
+    with _patch(client):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": "user"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_EMAIL: "a@b.c"}
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {"token": LINK}
+        )
     assert result["type"] == "abort"
-    assert result["reason"] == "single_instance_allowed"
+    assert result["reason"] == "already_configured"
 
 
 async def test_reauth_flow(hass):
