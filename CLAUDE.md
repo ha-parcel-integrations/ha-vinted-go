@@ -73,6 +73,12 @@ auto-imports every parcel (received and sent).
   the two in agreement if that ever changes. **Direction**
   (received/sent) splits incoming from outgoing; it lives under `raw`, not a
   canonical field. Unmapped status → `unknown` + one-shot warning.
+- **Closed-but-undelivered shipments are hidden** (issue #10). Vinted Go
+  keeps a disposed/lost/cancelled shipment on the account indefinitely, so the
+  coordinator drops any non-delivered parcel with `status_group == "completed"`
+  from the active lists. It stays in the event pass, so the hop to `problem`
+  fires once first; a shipment that reopens reappears on the next poll. That
+  `completed` means "closed for good" is inferred from one disposed payload.
 - **Multi-account.** No `single_config_entry`: the Vinted Go user id is the
   entry's unique_id, so a second account is allowed and the same account twice
   aborts `already_configured`. Everything is keyed by `entry_id` (device,

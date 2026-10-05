@@ -30,6 +30,7 @@ from .const import (
     QUIET_WINDOW_END_HOUR,
     QUIET_WINDOW_START_HOUR,
     STAGGER_MINUTES,
+    STATUS_GROUP_COMPLETED,
     ParcelStatus,
 )
 from .parcels import (
@@ -64,6 +65,10 @@ def _next_anchor(now: datetime) -> datetime:
         hour=QUIET_WINDOW_START_HOUR, minute=0, second=0, microsecond=0
     )
     return midnight_tomorrow
+
+
+def _is_closed(parcel: dict) -> bool:
+    return parcel["raw"].get("status_group") == STATUS_GROUP_COMPLETED
 
 
 def _hottest_tier_minutes(active_parcels: list[dict], now: datetime) -> int:
@@ -229,7 +234,10 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
         self.delivered_outgoing, active_out = self._split_delivered(
             outgoing, "planned_from"
         )
-        self.outgoing = active_out
+        # Events still see closed parcels, so the hop to problem fires once
+        # in the poll where the shipment closes before it leaves the sensors.
+        visible_in = [p for p in active_in if not _is_closed(p)]
+        self.outgoing = [p for p in active_out if not _is_closed(p)]
 
         # Events run over the active + delivered set combined, so the terminal
         # hop to delivered is visible in one pass.
@@ -244,13 +252,13 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
 
         now = dt_util.now()
         self._current_tier_minutes = _hottest_tier_minutes(
-            active_in + self.outgoing, now
+            visible_in + self.outgoing, now
         )
         self.update_interval = _next_update_interval(
             now, self._current_tier_minutes, self.config_entry.entry_id
         )
 
-        return active_in
+        return visible_in
 
     async def _enrich(self, shipment: dict, code: str) -> dict:
         """Attach the shipment's timeline events, using the cache when fresh."""

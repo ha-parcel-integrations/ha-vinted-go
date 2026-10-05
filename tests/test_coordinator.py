@@ -261,3 +261,77 @@ async def test_shipment_without_code_is_skipped(hass):
     client.async_get_tracking_events.side_effect = lambda c: None
     coord = VintedGoCoordinator(hass, client, entry)
     assert await coord._async_update_data() == []
+
+
+def _closed(ship: dict) -> dict:
+    return {**ship, "status_group": "completed", "shipment_state": "dispose"}
+
+
+async def test_closed_undelivered_parcel_leaves_the_sensors_after_its_event(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    coord = VintedGoCoordinator(hass, client, entry)
+
+    events = []
+    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: events.append(e))
+    out_events = []
+    hass.bus.async_listen(
+        f"{DOMAIN}_outgoing_parcel_status_changed", lambda e: out_events.append(e)
+    )
+
+    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "shipped", "2026-07-28T15:40:44Z")
+    s_out, t_out = _ship(OUT, CONTACT_TYPE_SENDER, "shipped", "2026-07-28T15:40:44Z")
+    client.async_get_shipments.return_value = [s_in, s_out]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(c)
+    await coord._async_update_data()
+
+    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "disposed", "2026-08-27T03:00:27Z")
+    s_out, t_out = _ship(OUT, CONTACT_TYPE_SENDER, "disposed", "2026-08-27T03:00:27Z")
+    client.async_get_shipments.return_value = [_closed(s_in), _closed(s_out)]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(c)
+    data = await coord._async_update_data()
+    await hass.async_block_till_done()
+
+    assert data == []
+    assert coord.outgoing == []
+    assert coord.delivered == []
+    assert coord.delivered_outgoing == []
+    assert [e.data["new_status"] for e in events] == [ParcelStatus.PROBLEM]
+    assert [e.data["new_status"] for e in out_events] == [ParcelStatus.PROBLEM]
+
+    await coord._async_update_data()
+    await hass.async_block_till_done()
+    assert len(events) == 1
+    assert len(out_events) == 1
+
+
+async def test_open_problem_parcel_stays_visible(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "pickup_failed", "2026-07-30T10:00:00Z")
+    coord = VintedGoCoordinator(hass, _client([s_in], {IN: t_in}), entry)
+
+    data = await coord._async_update_data()
+
+    assert [p["barcode"] for p in data] == [IN]
+    assert data[0]["status"] == ParcelStatus.PROBLEM
+
+
+async def test_reopened_shipment_reappears(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    coord = VintedGoCoordinator(hass, client, entry)
+
+    s1, t1 = _ship(IN, CONTACT_TYPE_RECIPIENT, "lost", "2026-07-30T10:00:00Z")
+    client.async_get_shipments.return_value = [_closed(s1)]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t1}.get(c)
+    assert await coord._async_update_data() == []
+
+    s2, t2 = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-31T10:00:00Z")
+    client.async_get_shipments.return_value = [s2]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t2}.get(c)
+    data = await coord._async_update_data()
+
+    assert [p["barcode"] for p in data] == [IN]

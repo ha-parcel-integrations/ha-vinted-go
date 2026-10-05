@@ -87,6 +87,11 @@ CONF_USER_ID = "user_id"
 CONTACT_TYPE_RECIPIENT = "recipient"
 CONTACT_TYPE_SENDER = "sender"
 
+# Vinted Go's ``status_group`` once a shipment is closed. A closed shipment
+# that wasn't delivered (disposed, lost, cancelled) stays on the account
+# indefinitely, so it is kept off the active sensors.
+STATUS_GROUP_COMPLETED = "completed"
+
 # --- Options -----------------------------------------------------------------
 # Delivered-parcels retention: keep delivered parcels visible for the last N
 # days, or keep only the N most recent — identical across the suite.

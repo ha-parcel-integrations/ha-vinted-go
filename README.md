@@ -121,6 +121,8 @@ Standard HA removal applies: **Settings → Devices & Services → Vinted Go →
 
 A delivered parcel moves from its per-parcel sensor to the matching delivered sensor automatically.
 
+A parcel Vinted Go closes without delivering it (disposed, lost, cancelled) disappears from the sensors once the `problem` status-changed event has fired.
+
 A **Refresh** button entity forces an immediate poll, without waiting for the next scheduled interval.
 
 ## Parcel status reference
