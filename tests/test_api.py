@@ -1,4 +1,5 @@
 """Tests for the Vinted Go account API client."""
+
 import aiohttp
 import pytest
 

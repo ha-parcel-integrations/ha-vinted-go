@@ -4,6 +4,7 @@ One place, because the sensors and the button must all land on the *same*
 device entry — and because the account-based variant only has to change this
 file to name devices per account.
 """
+
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry

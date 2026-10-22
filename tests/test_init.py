@@ -1,4 +1,5 @@
 """Tests for the Vinted Go setup / unload / reauth lifecycle."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
@@ -14,7 +15,7 @@ from custom_components.vinted_go.const import (
     DOMAIN,
 )
 
-from .payloads import shipments_list, timeline
+from .payloads import event, shipment, shipments_list, timeline
 
 
 def _entry() -> MockConfigEntry:
@@ -95,8 +96,6 @@ async def test_setup_not_ready_on_api_error(hass):
 
 async def test_per_parcel_sensors_spawn_and_removed(hass):
     """A per-parcel sensor appears for a new parcel and is removed when it goes."""
-    from .payloads import event, shipment, timeline
-
     entry = _entry()
     entry.add_to_hass(hass)
     client = _client([shipment("VGS_A", "recipient", last_at="2026-07-29T10:00:00Z")])

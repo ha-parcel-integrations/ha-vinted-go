@@ -1,6 +1,9 @@
 """Tests for the Vinted Go coordinator: fetch, split, cache and events."""
+
 from unittest.mock import AsyncMock
 
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.update_coordinator import UpdateFailed
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -108,8 +111,6 @@ async def test_timeline_is_cached_until_last_event_changes(hass):
 
 
 async def test_auth_error_becomes_config_entry_auth_failed(hass):
-    from homeassistant.exceptions import ConfigEntryAuthFailed
-
     entry = _entry()
     entry.add_to_hass(hass)
     client = AsyncMock()
@@ -120,8 +121,6 @@ async def test_auth_error_becomes_config_entry_auth_failed(hass):
 
 
 async def test_api_error_becomes_update_failed(hass):
-    from homeassistant.helpers.update_coordinator import UpdateFailed
-
     entry = _entry()
     entry.add_to_hass(hass)
     client = AsyncMock()
@@ -139,8 +138,11 @@ async def test_first_refresh_fires_nothing(hass):
 
     fired = []
     for suffix in (
-        "parcel_registered", "parcel_status_changed", "parcel_delivered",
-        "outgoing_parcel_status_changed", "outgoing_parcel_delivered",
+        "parcel_registered",
+        "parcel_status_changed",
+        "parcel_delivered",
+        "outgoing_parcel_status_changed",
+        "outgoing_parcel_delivered",
     ):
         hass.bus.async_listen(f"{DOMAIN}_{suffix}", lambda e: fired.append(e))
 
@@ -163,7 +165,9 @@ async def test_incoming_status_changed_event(hass):
     client.async_get_tracking_events.side_effect = lambda c: {IN: t1}.get(c)
     await coord._async_update_data()  # first refresh: suppressed
 
-    s2, t2 = _ship(IN, CONTACT_TYPE_RECIPIENT, "available_for_pickup", "2026-07-30T08:00:00Z")
+    s2, t2 = _ship(
+        IN, CONTACT_TYPE_RECIPIENT, "available_for_pickup", "2026-07-30T08:00:00Z"
+    )
     client.async_get_shipments.return_value = [s2]
     client.async_get_tracking_events.side_effect = lambda c: {IN: t2}.get(c)
     await coord._async_update_data()
@@ -182,14 +186,18 @@ async def test_incoming_delivered_event_only(hass):
 
     delivered, changed = [], []
     hass.bus.async_listen(f"{DOMAIN}_parcel_delivered", lambda e: delivered.append(e))
-    hass.bus.async_listen(f"{DOMAIN}_parcel_status_changed", lambda e: changed.append(e))
+    hass.bus.async_listen(
+        f"{DOMAIN}_parcel_status_changed", lambda e: changed.append(e)
+    )
 
     s1, t1 = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-29T10:00:00Z")
     client.async_get_shipments.return_value = [s1]
     client.async_get_tracking_events.side_effect = lambda c: {IN: t1}.get(c)
     await coord._async_update_data()
 
-    s2, t2 = _ship(IN, CONTACT_TYPE_RECIPIENT, "delivered", "2026-07-30T10:00:00Z", "delivered")
+    s2, t2 = _ship(
+        IN, CONTACT_TYPE_RECIPIENT, "delivered", "2026-07-30T10:00:00Z", "delivered"
+    )
     client.async_get_shipments.return_value = [s2]
     client.async_get_tracking_events.side_effect = lambda c: {IN: t2}.get(c)
     await coord._async_update_data()
@@ -242,7 +250,9 @@ async def test_outgoing_events(hass):
     client.async_get_tracking_events.side_effect = lambda c: {OUT: t1}.get(c)
     await coord._async_update_data()  # first: suppressed, no registered for outgoing
 
-    s2, t2 = _ship(OUT, CONTACT_TYPE_SENDER, "delivered", "2026-07-30T10:00:00Z", "delivered")
+    s2, t2 = _ship(
+        OUT, CONTACT_TYPE_SENDER, "delivered", "2026-07-30T10:00:00Z", "delivered"
+    )
     client.async_get_shipments.return_value = [s2]
     client.async_get_tracking_events.side_effect = lambda c: {OUT: t2}.get(c)
     await coord._async_update_data()
@@ -283,13 +293,17 @@ async def test_closed_undelivered_parcel_leaves_the_sensors_after_its_event(hass
     s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "shipped", "2026-07-28T15:40:44Z")
     s_out, t_out = _ship(OUT, CONTACT_TYPE_SENDER, "shipped", "2026-07-28T15:40:44Z")
     client.async_get_shipments.return_value = [s_in, s_out]
-    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(c)
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(
+        c
+    )
     await coord._async_update_data()
 
     s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "disposed", "2026-08-27T03:00:27Z")
     s_out, t_out = _ship(OUT, CONTACT_TYPE_SENDER, "disposed", "2026-08-27T03:00:27Z")
     client.async_get_shipments.return_value = [_closed(s_in), _closed(s_out)]
-    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(c)
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t_in, OUT: t_out}.get(
+        c
+    )
     data = await coord._async_update_data()
     await hass.async_block_till_done()
 
@@ -309,7 +323,9 @@ async def test_closed_undelivered_parcel_leaves_the_sensors_after_its_event(hass
 async def test_open_problem_parcel_stays_visible(hass):
     entry = _entry()
     entry.add_to_hass(hass)
-    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "pickup_failed", "2026-07-30T10:00:00Z")
+    s_in, t_in = _ship(
+        IN, CONTACT_TYPE_RECIPIENT, "pickup_failed", "2026-07-30T10:00:00Z"
+    )
     coord = VintedGoCoordinator(hass, _client([s_in], {IN: t_in}), entry)
 
     data = await coord._async_update_data()

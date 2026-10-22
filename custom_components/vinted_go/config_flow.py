@@ -4,6 +4,7 @@ Passwordless e-mail login in two steps: enter an e-mail (Vinted Go sends a
 verification link), then paste that link (or its token). Reauth reuses the same
 two steps to mint a fresh refresh token.
 """
+
 from __future__ import annotations
 
 import logging
@@ -11,7 +12,6 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-import voluptuous as vol
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -22,6 +22,7 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+import voluptuous as vol
 
 from .api import VintedGoApiClient, VintedGoApiError, VintedGoInvalidToken
 from .const import (
@@ -55,8 +56,6 @@ def extract_token(value: str) -> str:
         if match:
             return match.group(1)
     return value
-
-
 
 
 class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -144,9 +143,7 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"email": self._email or ""},
         )
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Start reauth — the refresh token no longer works."""
         self._reauth_entry = self._get_reauth_entry()
         self._email = entry_data.get(CONF_EMAIL)
@@ -189,9 +186,7 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
             history = user_input["history"]
             # Reload so a changed option takes effect immediately;
             # no update listener (deprecated alongside reload-on-update).
-            self.hass.config_entries.async_schedule_reload(
-                self.config_entry.entry_id
-            )
+            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
             return self.async_create_entry(
                 title="",
                 data={
@@ -230,7 +225,9 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
                                 ),
                             ): selector.NumberSelector(
                                 selector.NumberSelectorConfig(
-                                    min=1, max=365, step=1,
+                                    min=1,
+                                    max=365,
+                                    step=1,
                                     mode=selector.NumberSelectorMode.BOX,
                                 )
                             ),

@@ -1,4 +1,5 @@
 """Tests for the Vinted Go config, reauth and options flows."""
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -231,9 +232,7 @@ async def test_options_flow(hass):
         options={},
     )
     entry.add_to_hass(hass)
-    with patch(
-        "homeassistant.config_entries.ConfigEntries.async_schedule_reload"
-    ):
+    with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
         result = await hass.config_entries.options.async_init(entry.entry_id)
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],

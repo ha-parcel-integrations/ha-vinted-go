@@ -1,8 +1,9 @@
 """Sensor platform for the Vinted Go parcel tracker integration."""
+
 from __future__ import annotations
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -67,7 +68,7 @@ async def async_setup_entry(
             and entity_entry.unique_id.startswith(f"{entry_id}_")
             and entity_entry.unique_id not in non_parcel_unique_ids
         ):
-            barcode = entity_entry.unique_id[len(f"{entry_id}_"):]
+            barcode = entity_entry.unique_id[len(f"{entry_id}_") :]
             if barcode not in current_barcodes:
                 registry.async_remove(entity_entry.entity_id)
 
@@ -81,10 +82,10 @@ async def async_setup_entry(
         VintedGoOutgoingDeliveredSensor(coordinator, entry),
         VintedGoLastUpdateSensor(coordinator, entry),
     ]
-    for parcel in _active_parcels(coordinator):
-        entities.append(
-            VintedGoParcelSensor(coordinator, entry, parcel.get("barcode", ""))
-        )
+    entities.extend(
+        VintedGoParcelSensor(coordinator, entry, parcel.get("barcode", ""))
+        for parcel in _active_parcels(coordinator)
+    )
 
     async_add_entities(entities)
 
@@ -98,9 +99,7 @@ class _SummarySensor(CoordinatorEntity[VintedGoCoordinator], SensorEntity):
     _unrecorded_attributes = frozenset({"parcels"})
     _unique_suffix = ""
 
-    def __init__(
-        self, coordinator: VintedGoCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: VintedGoCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_{self._unique_suffix}"
@@ -253,9 +252,7 @@ class VintedGoParcelSensor(CoordinatorEntity[VintedGoCoordinator], SensorEntity)
         return dict(parcel) if parcel else {}
 
 
-class VintedGoLastUpdateSensor(
-    CoordinatorEntity[VintedGoCoordinator], SensorEntity
-):
+class VintedGoLastUpdateSensor(CoordinatorEntity[VintedGoCoordinator], SensorEntity):
     """Diagnostic sensor reporting when Vinted Go was last polled successfully."""
 
     _attr_has_entity_name = True
@@ -264,9 +261,7 @@ class VintedGoLastUpdateSensor(
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_attribution = ATTRIBUTION
 
-    def __init__(
-        self, coordinator: VintedGoCoordinator, entry: ConfigEntry
-    ) -> None:
+    def __init__(self, coordinator: VintedGoCoordinator, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_last_update"

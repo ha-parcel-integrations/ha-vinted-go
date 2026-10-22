@@ -1,5 +1,6 @@
 """Tests for the pure parcel-mapping helpers."""
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -12,6 +13,7 @@ from custom_components.vinted_go.const import (
     KNOWN_CAPABILITIES,
     ParcelStatus,
 )
+import custom_components.vinted_go.parcels as parcels_mod
 from custom_components.vinted_go.parcels import (
     apply_delivered_filter,
     build_history,
@@ -29,7 +31,7 @@ from .payloads import event, parcel_raw
 
 
 @pytest.mark.parametrize(
-    "code,expected",
+    ("code", "expected"),
     [
         ("created", ParcelStatus.REGISTERED),
         ("shipped", ParcelStatus.IN_TRANSIT),
@@ -73,7 +75,7 @@ def test_unmapped_status_warns_only_once(caplog):
 
 def test_parse_iso_handles_z_naive_and_garbage():
     assert parse_iso("2026-04-29T13:12:42Z").tzinfo is not None
-    assert parse_iso("2026-04-29T13:12:42").tzinfo == timezone.utc
+    assert parse_iso("2026-04-29T13:12:42").tzinfo == UTC
     assert parse_iso("not-a-date") is None
     assert parse_iso(None) is None
 
@@ -109,9 +111,23 @@ def test_build_history_falls_back_to_group_without_message():
 # --- normalize_parcel -------------------------------------------------------
 
 CANONICAL_KEYS = [
-    "carrier", "barcode", "sender", "receiver", "status", "raw_status",
-    "delivered", "delivered_at", "planned_from", "planned_to", "pickup",
-    "pickup_point", "url", "weight", "dimensions", "history", "raw",
+    "carrier",
+    "barcode",
+    "sender",
+    "receiver",
+    "status",
+    "raw_status",
+    "delivered",
+    "delivered_at",
+    "planned_from",
+    "planned_to",
+    "pickup",
+    "pickup_point",
+    "url",
+    "weight",
+    "dimensions",
+    "history",
+    "raw",
 ]
 
 
@@ -199,8 +215,6 @@ def test_normalize_keeps_raw_payload():
 
 
 def test_point_with_name_does_not_warn(caplog):
-    import custom_components.vinted_go.parcels as parcels_mod
-
     parcels_mod._point_without_name_logged = False
     raw = parcel_raw("VGS1", point={"name": "Central Station", "address": "x"})
     normalize_parcel(raw)
@@ -208,8 +222,6 @@ def test_point_with_name_does_not_warn(caplog):
 
 
 def test_point_without_name_warns_once(caplog):
-    import custom_components.vinted_go.parcels as parcels_mod
-
     parcels_mod._point_without_name_logged = False
     normalize_parcel(parcel_raw("VGS1", point={"label": "Central Station"}))
     normalize_parcel(parcel_raw("VGS2", point={"label": "Other"}))  # one-shot
@@ -244,7 +256,7 @@ def _entry(filter_type: str, amount: int) -> MockConfigEntry:
 
 
 def _delivered_pair() -> list[dict]:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return [
         {"barcode": "RECENT", "delivered_at": (now - timedelta(days=1)).isoformat()},
         {"barcode": "OLD", "delivered_at": (now - timedelta(days=30)).isoformat()},
@@ -268,7 +280,7 @@ def test_capabilities_are_known_values():
 
 def test_capabilities_are_pickup_point_url_and_history():
     """The account payload carries the service point but no ETA/weight/dimensions."""
-    assert CAPABILITIES == {"pickup_point", "url", "history"}
+    assert {"pickup_point", "url", "history"} == CAPABILITIES
 
 
 _GLS_HUB = {"code": "NL100402", "name": "GLS NL HUB", "country_code": "DE"}
@@ -279,7 +291,9 @@ def _relabelled(message: str, point: dict | None = _GLS_HUB) -> dict:
     raw["tracking_events"] = [
         *raw["tracking_events"],
         event("in_transit", "2026-09-04T07:07:36.845Z", message),
-        event("in_transit", "2026-09-04T07:07:39.939Z", "At sorting center in Breda, NL"),
+        event(
+            "in_transit", "2026-09-04T07:07:39.939Z", "At sorting center in Breda, NL"
+        ),
     ]
     return raw
 

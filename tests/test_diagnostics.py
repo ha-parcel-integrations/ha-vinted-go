@@ -1,16 +1,19 @@
 """Tests for Vinted Go diagnostics."""
+
 from datetime import timedelta
 from unittest.mock import MagicMock
 
-from custom_components.vinted_go.diagnostics import (
-    async_get_config_entry_diagnostics,
-)
+from custom_components.vinted_go.diagnostics import async_get_config_entry_diagnostics
 
 
 async def test_diagnostics_redacts_and_counts(hass):
     """Diagnostics get pasted into public issues — nothing identifying survives."""
     entry = MagicMock()
-    entry.data = {"email": "fam@example.com", "refresh_token": "secret", "user_id": 12345}
+    entry.data = {
+        "email": "fam@example.com",
+        "refresh_token": "secret",
+        "user_id": 12345,
+    }
     entry.options = {"include_history": False}
     parcel = {
         "barcode": "VGS1",

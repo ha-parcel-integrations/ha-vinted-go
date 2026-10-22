@@ -11,6 +11,7 @@ The coordinator merges a shipment's timeline events onto the shipment before
 normalising, so :func:`parcel_raw` builds that merged dict for the mapping tests.
 All values are fake but shaped like the real captured data.
 """
+
 from __future__ import annotations
 
 from custom_components.vinted_go.const import (

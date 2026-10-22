@@ -1,5 +1,6 @@
 """Tests for Vinted Go sensor property logic."""
-from datetime import datetime, timezone
+
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 
 from custom_components.vinted_go.const import ParcelStatus
@@ -48,7 +49,9 @@ def test_awaiting_pickup_counts_every_parcel_at_pickup_point():
     ready["pickup"] = True
     non_pickup_point = _parcel("B", ParcelStatus.IN_TRANSIT)
     non_pickup_point["pickup"] = True
-    coordinator = _coordinator(data=[ready, non_pickup_point, _parcel("C", ParcelStatus.AT_PICKUP_POINT)])
+    coordinator = _coordinator(
+        data=[ready, non_pickup_point, _parcel("C", ParcelStatus.AT_PICKUP_POINT)]
+    )
     sensor = VintedGoAwaitingPickupSensor(coordinator, _entry())
     assert sensor.native_value == 2
     assert len(sensor.extra_state_attributes["parcels"]) == 2
@@ -95,7 +98,7 @@ def test_parcel_sensor_missing_barcode():
 
 def test_last_update_sensor():
     coordinator = _coordinator()
-    moment = datetime(2026, 6, 30, 12, 0, tzinfo=timezone.utc)
+    moment = datetime(2026, 6, 30, 12, 0, tzinfo=UTC)
     coordinator.last_success_time = moment
     sensor = VintedGoLastUpdateSensor(coordinator, _entry())
     assert sensor.native_value == moment

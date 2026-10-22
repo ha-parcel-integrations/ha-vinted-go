@@ -1,4 +1,5 @@
 """Diagnostics support for the Vinted Go parcel tracker integration."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -54,9 +55,7 @@ async def async_get_config_entry_diagnostics(
             ),
         },
         "incoming": async_redact_data(coordinator.data or [], TO_REDACT),
-        "incoming_delivered": async_redact_data(
-            coordinator.delivered or [], TO_REDACT
-        ),
+        "incoming_delivered": async_redact_data(coordinator.delivered or [], TO_REDACT),
         "outgoing": async_redact_data(coordinator.outgoing or [], TO_REDACT),
         "outgoing_delivered": async_redact_data(
             coordinator.delivered_outgoing or [], TO_REDACT

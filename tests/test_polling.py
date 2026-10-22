@@ -4,7 +4,8 @@
 Pure-function tests for the tiering/scheduling helpers, plus a few
 integration checks that ``_async_update_data`` actually wires them up.
 """
-from datetime import datetime, timedelta, timezone
+
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
@@ -67,8 +68,6 @@ def _ship(code, contact_type, group, ts, resolution=None):
 # helpers
 # ---------------------------------------------------------------------------
 
-UTC = timezone.utc
-
 
 def test_quiet_window_is_midnight_to_six():
     assert _in_quiet_window(datetime(2026, 1, 1, 0, 0, tzinfo=UTC))
@@ -126,9 +125,7 @@ def test_tier_is_hot_when_out_for_delivery_without_planned_from():
 
 def test_tier_is_hot_when_planned_from_is_unparseable():
     now = datetime(2026, 1, 1, 12, tzinfo=UTC)
-    parcels = [
-        {"status": ParcelStatus.OUT_FOR_DELIVERY, "planned_from": "not-a-date"}
-    ]
+    parcels = [{"status": ParcelStatus.OUT_FOR_DELIVERY, "planned_from": "not-a-date"}]
     assert _hottest_tier_minutes(parcels, now) == HOT_INTERVAL_MINUTES
 
 
@@ -199,7 +196,9 @@ async def test_recomputes_interval_and_never_stops(hass):
 async def test_goes_hot_for_out_for_delivery(hass):
     entry = _entry()
     entry.add_to_hass(hass)
-    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_delivery", "2026-07-29T10:00:00Z")
+    s_in, t_in = _ship(
+        IN, CONTACT_TYPE_RECIPIENT, "in_delivery", "2026-07-29T10:00:00Z"
+    )
     coord = VintedGoCoordinator(hass, _client([s_in], {IN: t_in}), entry)
 
     await coord._async_update_data()

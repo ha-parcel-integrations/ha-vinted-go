@@ -1,4 +1,5 @@
 """Tests for Vinted Go device triggers."""
+
 from custom_components.vinted_go.const import DOMAIN
 from custom_components.vinted_go.device_trigger import (
     TRIGGER_EVENTS,

@@ -15,10 +15,11 @@ Only the **refresh token** is persisted. The session token is refreshed silently
 ``on_tokens_updated`` so the caller can persist it. A failed refresh raises
 :class:`VintedGoAuthError`, which setup maps to reauth.
 """
+
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
+import logging
 from typing import Any
 
 import aiohttp

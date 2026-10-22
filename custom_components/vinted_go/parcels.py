@@ -11,11 +11,12 @@ Two things here are carrier-specific: :data:`_STATUS_MAP` and
 builder, the sort contract, the delivered filter, the one-shot warning for
 unmapped statuses — is suite-wide machinery and should be left alone.
 """
+
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 import logging
 import re
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -117,7 +118,7 @@ _point_without_name_logged = False
 
 def _note_point_shape(point: dict) -> None:
     """One-shot: flag a pickup point missing ``name`` — its shape is otherwise confirmed."""
-    global _point_without_name_logged
+    global _point_without_name_logged  # noqa: PLW0603 -- one-shot flag, reset by the tests
     if point.get("name") or _point_without_name_logged:
         return
     _point_without_name_logged = True
@@ -147,7 +148,9 @@ def _warn_unmapped_status(code: str) -> None:
 _unmapped_contact_types_logged: set[str] = set()
 
 
-def warn_unrecognised_contact_type(barcode: str | None, contact_type: str | None) -> None:
+def warn_unrecognised_contact_type(
+    barcode: str | None, contact_type: str | None
+) -> None:
     """Log once when a shipment's ``contact_type`` matches neither known value.
 
     The coordinator splits shipments into incoming/outgoing purely by
@@ -209,11 +212,11 @@ def parse_iso(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(str(value))
     except ValueError:
         return None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        parsed = parsed.replace(tzinfo=UTC)
     return parsed
 
 
@@ -229,7 +232,7 @@ def to_iso_timestamp(value: Any) -> str | None:
         return None
     if isinstance(value, (int, float)):
         try:
-            return datetime.fromtimestamp(value / 1000, tz=timezone.utc).isoformat()
+            return datetime.fromtimestamp(value / 1000, tz=UTC).isoformat()
         except (OverflowError, OSError, ValueError):
             return None
     return str(value)
@@ -312,8 +315,7 @@ def gls_handover_url(raw: dict, events: list) -> str | None:
     valid = [ev for ev in events if isinstance(ev, dict)]
     for ev in sorted(
         valid,
-        key=lambda e: parse_iso(e.get("timestamp"))
-        or datetime.min.replace(tzinfo=timezone.utc),
+        key=lambda e: parse_iso(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC),
         reverse=True,
     ):
         match = _GLS_CODE_RE.search(ev.get("message") or "")
@@ -335,8 +337,8 @@ def latest_event(events: list | None) -> dict | None:
         return None
     return max(
         valid,
-        key=lambda event: parse_iso(event.get("timestamp")) or datetime.min.replace(
-            tzinfo=timezone.utc
+        key=lambda event: (
+            parse_iso(event.get("timestamp")) or datetime.min.replace(tzinfo=UTC)
         ),
     )
 
@@ -453,14 +455,12 @@ def apply_delivered_filter(parcels: list[dict], entry: ConfigEntry) -> list[dict
     shows.
     """
     options = entry.options
-    filter_type = options.get(
-        CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE
-    )
+    filter_type = options.get(CONF_DELIVERED_FILTER_TYPE, DEFAULT_DELIVERED_FILTER_TYPE)
     amount = int(
         options.get(CONF_DELIVERED_FILTER_AMOUNT, DEFAULT_DELIVERED_FILTER_AMOUNT)
     )
     if filter_type == "days":
-        cutoff = datetime.now(timezone.utc) - timedelta(days=amount)
+        cutoff = datetime.now(UTC) - timedelta(days=amount)
         return [
             parcel
             for parcel in parcels

@@ -1,4 +1,5 @@
 """Tests for the Vinted Go refresh button."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.vinted_go.button import VintedGoRefreshButton
