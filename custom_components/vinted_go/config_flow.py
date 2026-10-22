@@ -157,7 +157,7 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             client = VintedGoApiClient(async_get_clientsession(self.hass))
             try:
-                await client.async_register(self._email)
+                await client.async_register(self._get_reauth_entry().data[CONF_EMAIL])
             except VintedGoApiError:
                 errors["base"] = "cannot_connect"
             else:

@@ -122,6 +122,8 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
     ``contact_type`` (``recipient`` → incoming, ``sender`` → outgoing).
     """
 
+    config_entry: ConfigEntry
+
     def __init__(
         self,
         hass: HomeAssistant,
