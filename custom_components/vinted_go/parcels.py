@@ -74,6 +74,7 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "left_depot": ParcelStatus.IN_TRANSIT,
     "in_transit": ParcelStatus.IN_TRANSIT,  # ✓
     "redirected": ParcelStatus.IN_TRANSIT,  # ✓ sent to a different pickup point, still moving
+    "left_our_network": ParcelStatus.IN_TRANSIT,  # ✓ handed to a partner network abroad
     # on its way to the delivery address
     "in_delivery": ParcelStatus.OUT_FOR_DELIVERY,
     # waiting at a pickup point / locker

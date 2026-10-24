@@ -43,6 +43,7 @@ from .payloads import event, parcel_raw
         ("return", ParcelStatus.RETURNING),
         ("returned", ParcelStatus.DELIVERED),
         ("redirected", ParcelStatus.IN_TRANSIT),
+        ("left_our_network", ParcelStatus.IN_TRANSIT),
         ("return_to_sender", ParcelStatus.RETURNING),
         ("lost", ParcelStatus.PROBLEM),
     ],

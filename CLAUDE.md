@@ -90,6 +90,8 @@ auto-imports every parcel (received and sent).
   strict 12-digit match. Whether `tracking_code` itself is replaced by the GLS
   number is unclear (the #11 report was inconsistently redacted). Don't call
   GLS from here — no inter-repo code; the README points users at ha-gls.
+  The handover itself can surface as a `left_our_network` event (#15, "Parcel
+  is on the way to Netherlands") → `in_transit`.
 - **Multi-account.** No `single_config_entry`: the Vinted Go user id is the
   entry's unique_id, so a second account is allowed and the same account twice
   aborts `already_configured`. Everything is keyed by `entry_id` (device,
