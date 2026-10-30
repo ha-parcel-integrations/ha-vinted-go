@@ -118,6 +118,7 @@ Standard HA removal applies: **Settings → Devices & Services → Vinted Go →
 | Entity | Description |
 |---|---|
 | `sensor.vinted_go_<email>_incoming_parcels` | Active parcels you're receiving; full list under the `parcels` attribute |
+| `sensor.vinted_go_<email>_awaiting_pickup` | Incoming parcels that are ready to collect at a pickup point |
 | `sensor.vinted_go_<email>_outgoing_parcels` | Active parcels you sent |
 | `sensor.vinted_go_<email>_delivered_parcels` | Recently received parcels (see the retention option) |
 | `sensor.vinted_go_<email>_delivered_outgoing_parcels` | Recently delivered parcels you sent |
