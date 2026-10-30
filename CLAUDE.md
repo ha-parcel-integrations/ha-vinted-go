@@ -106,8 +106,8 @@ auto-imports every parcel (received and sent).
 
 Everything not listed here follows the scaffold exactly.
 
-*Options and reloads* — account-based, so `async_schedule_reload` on submit
-with **no** update listener. That is the whole divergence now: the interval
+*Options and reloads* — account-based, so an `OptionsFlowWithReload` with
+**no** update listener. That is the whole divergence now: the interval
 half is gone. `CONF_REFRESH_INTERVAL` (15/30/60/120/240 min plus `"auto"`,
 Phase 1, 1.1.0) was removed in the Phase 2 convergence (maintainer decision
 2026-09-12, every remaining Phase-1 carrier goes unconditional), so this

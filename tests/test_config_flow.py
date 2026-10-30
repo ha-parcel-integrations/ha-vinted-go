@@ -232,7 +232,12 @@ async def test_options_flow(hass):
         options={},
     )
     entry.add_to_hass(hass)
-    with patch("homeassistant.config_entries.ConfigEntries.async_schedule_reload"):
+    seen = []
+    with patch.object(
+        hass.config_entries,
+        "async_schedule_reload",
+        side_effect=lambda entry_id: seen.append(dict(entry.options)),
+    ):
         result = await hass.config_entries.options.async_init(entry.entry_id)
         result = await hass.config_entries.options.async_configure(
             result["flow_id"],
@@ -248,6 +253,8 @@ async def test_options_flow(hass):
     assert CONF_REFRESH_INTERVAL_KEY not in result["data"]
     assert result["data"][CONF_INCLUDE_HISTORY] is True
     assert result["data"][CONF_DELIVERED_FILTER_AMOUNT] == 5
+    # The reload must see the saved options, not the ones from before the form.
+    assert seen == [result["data"]]
 
 
 async def test_options_flow_ignores_a_stale_stored_refresh_interval(hass):

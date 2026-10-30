@@ -16,7 +16,7 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlow,
+    OptionsFlowWithReload,
 )
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import section
@@ -170,7 +170,7 @@ class VintedGoConfigFlow(ConfigFlow, domain=DOMAIN):
         )
 
 
-class VintedGoOptionsFlowHandler(OptionsFlow):
+class VintedGoOptionsFlowHandler(OptionsFlowWithReload):
     """Delivered-retention and history — one sectioned form.
 
     Polling cadence is not configurable — the coordinator drives it from
@@ -184,9 +184,8 @@ class VintedGoOptionsFlowHandler(OptionsFlow):
         if user_input is not None:
             delivered = user_input["delivered"]
             history = user_input["history"]
-            # Reload so a changed option takes effect immediately;
-            # no update listener (deprecated alongside reload-on-update).
-            self.hass.config_entries.async_schedule_reload(self.config_entry.entry_id)
+            # OptionsFlowWithReload reloads once the new options are saved; a
+            # reload scheduled here would start before that, on the old ones.
             return self.async_create_entry(
                 title="",
                 data={
