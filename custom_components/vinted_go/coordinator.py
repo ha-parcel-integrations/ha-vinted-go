@@ -244,19 +244,21 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
             if contact_type not in (CONTACT_TYPE_RECIPIENT, CONTACT_TYPE_SENDER):
                 warn_unrecognised_contact_type(p.get("barcode"), contact_type)
 
-        self.delivered, active_in = self._split_delivered(incoming, "planned_from")
-        self.delivered_outgoing, active_out = self._split_delivered(
-            outgoing, "planned_from"
+        delivered_in, active_in = self._split_delivered(incoming, "planned_from")
+        delivered_out, active_out = self._split_delivered(outgoing, "planned_from")
+        self.delivered = apply_delivered_filter(delivered_in, self.config_entry)
+        self.delivered_outgoing = apply_delivered_filter(
+            delivered_out, self.config_entry
         )
         # Events still see closed parcels, so the hop to problem fires once
         # in the poll where the shipment closes before it leaves the sensors.
         visible_in = [p for p in active_in if not _is_closed(p)]
         self.outgoing = [p for p in active_out if not _is_closed(p)]
 
-        # Events run over the active + delivered set combined, so the terminal
-        # hop to delivered is visible in one pass.
-        combined_in = active_in + self.delivered
-        combined_out = active_out + self.delivered_outgoing
+        # Events and remembered state cover every parcel; the retention option
+        # only limits what the delivered sensor shows.
+        combined_in = active_in + delivered_in
+        combined_out = active_out + delivered_out
         self._fire_change_events(combined_in)
         self._fire_outgoing_change_events(combined_out)
         self._known_state = self._status_map(combined_in)
@@ -289,11 +291,10 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
     def _split_delivered(
         self, parcels: list[dict], sort_field: str
     ) -> tuple[list[dict], list[dict]]:
-        """Return (delivered, active) — delivered filtered + sorted, active sorted."""
+        """Return (delivered, active), both sorted."""
         delivered = sort_parcels_by_ts(
             [p for p in parcels if p["delivered"]], "delivered_at", descending=True
         )
-        delivered = apply_delivered_filter(delivered, self.config_entry)
         active = sort_parcels_by_ts(
             [p for p in parcels if not p["delivered"]], sort_field
         )

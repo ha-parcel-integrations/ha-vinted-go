@@ -351,3 +351,46 @@ async def test_reopened_shipment_reappears(hass):
     data = await coord._async_update_data()
 
     assert [p["barcode"] for p in data] == [IN]
+
+
+async def test_a_parcel_the_delivered_list_leaves_out_still_fires_delivered(hass):
+    """The retention option limits the delivered sensor, never the events."""
+    other = "VGS0000000000003"
+    entry = _entry(**{CONF_DELIVERED_FILTER_AMOUNT: 1})
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    coord = VintedGoCoordinator(hass, client, entry)
+    delivered = []
+    hass.bus.async_listen(f"{DOMAIN}_parcel_delivered", lambda e: delivered.append(e))
+
+    ships = [
+        _ship(code, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-29T10:00:00Z")
+        for code in (IN, other)
+    ]
+    client.async_get_shipments.return_value = [ship for ship, _ in ships]
+    client.async_get_tracking_events.side_effect = lambda c: {
+        IN: ships[0][1],
+        other: ships[1][1],
+    }.get(c)
+    await coord._async_update_data()
+
+    done = [
+        _ship(
+            code,
+            CONTACT_TYPE_RECIPIENT,
+            "delivered",
+            f"2026-07-{day}T10:00:00Z",
+            "delivered",
+        )
+        for code, day in ((IN, 30), (other, 31))
+    ]
+    client.async_get_shipments.return_value = [ship for ship, _ in done]
+    client.async_get_tracking_events.side_effect = lambda c: {
+        IN: done[0][1],
+        other: done[1][1],
+    }.get(c)
+    await coord._async_update_data()
+    await hass.async_block_till_done()
+
+    assert sorted(e.data["barcode"] for e in delivered) == sorted([IN, other])
+    assert [p["barcode"] for p in coord.delivered] == [other]
