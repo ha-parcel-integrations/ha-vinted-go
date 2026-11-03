@@ -255,7 +255,7 @@ def format_dimensions(
         "length": length,
         "width": width,
         "height": height,
-        "text": f"{int(length)} x {int(width)} x {int(height)} cm",
+        "text": f"{round(length)} x {round(width)} x {round(height)} cm",
     }
 
 
