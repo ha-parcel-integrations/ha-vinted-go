@@ -1,6 +1,7 @@
 {
   "domain": "vinted_go",
   "name": "Vinted Go",
+  "categories": ["productivity_information"],
   "codeowners": [
     "@peter-mdf"
   ],
