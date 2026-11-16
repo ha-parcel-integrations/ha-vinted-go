@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/ha-parcel-integrations/ha-vinted-go.svg)](https://github.com/ha-parcel-integrations/ha-vinted-go/releases)
 [![Downloads](https://img.shields.io/github/downloads/ha-parcel-integrations/ha-vinted-go/total.svg)](https://github.com/ha-parcel-integrations/ha-vinted-go/releases)
-[![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+[![Marketplace](https://img.shields.io/badge/Marketplace-Default-41BDF5.svg)](https://hacs.xyz)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > 📦 Part of [**ha-parcel-integrations**](https://ha-parcel-integrations.github.io/), a family of package-tracking integrations for Home Assistant that all publish the same parcel format, statuses and events, so they plug into cross-carrier automations and the optional [Parcel Aggregator](https://github.com/ha-parcel-integrations/ha-parcel-aggregator). Browse the other carriers on the website.
@@ -48,14 +48,14 @@ A custom Home Assistant integration for your [Vinted Go](https://vintedgo.com) (
 
 ## Installation
 
-### HACS (recommended)
+### Marketplace (recommended)
 
-1. Open HACS and search for **Vinted Go**.
-2. Install it and restart Home Assistant if HACS asks you to.
+1. Open the Marketplace and search for **Vinted Go**.
+2. Install it and restart Home Assistant if it asks you to.
 
-Or click the button below to open it directly in HACS:
+Or click the button below to open it directly in the Marketplace:
 
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ha-parcel-integrations&repository=ha-vinted-go&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ha-parcel-integrations&repository=ha-vinted-go&category=integration)
 
 ### Manual
 
@@ -70,7 +70,7 @@ Or set it up by hand: add the integration via **Settings → Devices & Services 
 1. **Enter your e-mail address.** Vinted Go sends a verification link to that inbox.
 2. **Open the e-mail and paste the verification link** (or just its token) into the next field.
 
-That's it — no password. Your parcels are imported automatically and refreshed on a schedule. The session renews itself silently; you only log in again if Home Assistant asks you to (a rare **reauth** prompt).
+That's it — no password. Your parcels are imported automatically and refreshed on a schedule. The session renews itself silently; you only log in again if it asks you to (a rare **reauth** prompt).
 
 You can add more than one Vinted Go account — repeat the steps with another e-mail address. Each account gets its own device, named **`Vinted Go (<your-email>)`**, and its own sensors. Adding the same account twice is refused.
 
