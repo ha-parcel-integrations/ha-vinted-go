@@ -7,6 +7,7 @@ from custom_components.vinted_go.const import ParcelStatus
 from custom_components.vinted_go.sensor import (
     VintedGoAwaitingPickupSensor,
     VintedGoDeliveredParcelsSensor,
+    VintedGoEnRouteToPickupPointSensor,
     VintedGoIncomingParcelsSensor,
     VintedGoLastUpdateSensor,
     VintedGoOutgoingDeliveredSensor,
@@ -55,6 +56,20 @@ def test_awaiting_pickup_counts_every_parcel_at_pickup_point():
     sensor = VintedGoAwaitingPickupSensor(coordinator, _entry())
     assert sensor.native_value == 2
     assert len(sensor.extra_state_attributes["parcels"]) == 2
+
+
+def test_en_route_counts_pickup_parcels_not_yet_at_the_point():
+    en_route = _parcel("A", ParcelStatus.IN_TRANSIT)
+    en_route["pickup"] = True
+    arrived = _parcel("B", ParcelStatus.AT_PICKUP_POINT)
+    arrived["pickup"] = True
+    returning = _parcel("C", ParcelStatus.RETURNING)
+    returning["pickup"] = True
+    home = _parcel("D", ParcelStatus.IN_TRANSIT)
+    coordinator = _coordinator(data=[en_route, arrived, returning, home])
+    sensor = VintedGoEnRouteToPickupPointSensor(coordinator, _entry())
+    assert [p["barcode"] for p in sensor.extra_state_attributes["parcels"]] == ["A"]
+    assert sensor.native_value == 1
 
 
 def test_awaiting_pickup_is_empty_without_parcels():

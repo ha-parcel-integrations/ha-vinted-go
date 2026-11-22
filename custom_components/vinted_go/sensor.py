@@ -56,6 +56,7 @@ async def async_setup_entry(
     registry = er.async_get(hass)
     non_parcel_unique_ids = {
         f"{entry_id}_incoming_parcels",
+        f"{entry_id}_en_route_to_pickup_point",
         f"{entry_id}_awaiting_pickup",
         f"{entry_id}_delivered_parcels",
         f"{entry_id}_outgoing_parcels",
@@ -76,6 +77,7 @@ async def async_setup_entry(
         VintedGoIncomingParcelsSensor(
             coordinator, entry, async_add_entities, current_barcodes
         ),
+        VintedGoEnRouteToPickupPointSensor(coordinator, entry),
         VintedGoAwaitingPickupSensor(coordinator, entry),
         VintedGoDeliveredParcelsSensor(coordinator, entry),
         VintedGoOutgoingParcelsSensor(coordinator, entry),
@@ -168,6 +170,22 @@ class VintedGoIncomingParcelsSensor(_SummarySensor):
 
         self._known_barcodes = current_barcodes
         super()._handle_coordinator_update()
+
+
+class VintedGoEnRouteToPickupPointSensor(_SummarySensor):
+    """Incoming parcels destined for, but not yet at, a pickup point."""
+
+    _attr_translation_key = "en_route_to_pickup_point"
+    _unique_suffix = "en_route_to_pickup_point"
+
+    def _parcels(self) -> list[dict]:
+        return [
+            parcel
+            for parcel in (self.coordinator.data or [])
+            if parcel.get("pickup")
+            and parcel.get("status")
+            not in (ParcelStatus.AT_PICKUP_POINT, ParcelStatus.RETURNING)
+        ]
 
 
 class VintedGoAwaitingPickupSensor(_SummarySensor):

@@ -101,6 +101,22 @@ auto-imports every parcel (received and sent).
   `on_vacation_until`, `opening_hours`, `postal_code`. `normalize_parcel` only
   reads `name`; the one-shot warning now fires solely when a populated `point`
   lacks it (an actual gap, not an unconfirmed shape).
+- **Pickup.** Vinted Go delivers to pickup points, so both `en_route_to_pickup_point`
+  and `awaiting_pickup` exist (incoming parcels only). `pickup` is true for a
+  received parcel that has a `point`, or that reached `at_pickup_point` in any
+  event, and stays true after collection; `pickup_point` is that point's name and
+  is `None` unless `pickup`. A **sent** parcel's `point` may be the sender's
+  drop-off, which is not a pickup, so a sent parcel never takes `pickup` from
+  `point` and has no `pickup_point`; no real sent-parcel payload has shown which
+  it is. Not yet seen on a real parcel: a received parcel carrying a `point`
+  while still in transit (the en-route sensor reads 0 until then).
+- **A concluded return is `returning` with `delivered` true.** The `returned`
+  group (and the unseen `return_delivered`) is the explicit back-at-sender signal, so the parcel leaves the active
+  list and `delivered_at` is that event's timestamp, but its status stays
+  `returning`: no `_parcel_delivered` event fires (and, since the status stays `returning`,
+  no status-change event either). A real
+  receiving account's completed return showed no other terminal event, and
+  mapping it to `unknown` was the reported bug (#4).
 
 ## Divergences from the scaffold
 

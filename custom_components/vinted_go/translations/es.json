@@ -88,6 +88,10 @@
         "name": "Paquetes entrantes",
         "unit_of_measurement": "paquetes"
       },
+      "en_route_to_pickup_point": {
+        "name": "En camino al punto de recogida",
+        "unit_of_measurement": "paquetes"
+      },
       "awaiting_pickup": {
         "name": "Listo para recoger",
         "unit_of_measurement": "paquetes"

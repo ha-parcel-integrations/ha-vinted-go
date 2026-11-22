@@ -14,7 +14,8 @@ unmapped statuses — is suite-wide machinery and should be left alone.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from collections.abc import Iterable
+from datetime import UTC, date, datetime, time, timedelta, tzinfo
 import logging
 import re
 from typing import Any
@@ -93,17 +94,20 @@ _STATUS_MAP: dict[str, ParcelStatus] = {
     "pickup_cancelled": ParcelStatus.PROBLEM,
     # returns to sender
     "return": ParcelStatus.RETURNING,  # ✓ return in progress
-    "returned": ParcelStatus.DELIVERED,  # ✓ return concluded — handed back to the sender
+    "returned": ParcelStatus.RETURNING,  # ✓ back at the sender; see `delivered` in normalize
     "return_return": ParcelStatus.RETURNING,
     "return_to_sender": ParcelStatus.RETURNING,
     "return_in_transit": ParcelStatus.RETURNING,
     "return_ready_for_pickup": ParcelStatus.AT_PICKUP_POINT,
-    "return_delivered": ParcelStatus.DELIVERED,
+    "return_delivered": ParcelStatus.RETURNING,
     "return_lost": ParcelStatus.PROBLEM,
     "return_disposed": ParcelStatus.PROBLEM,
     "return_empty_locker_found": ParcelStatus.PROBLEM,
     "return_cancelled": ParcelStatus.PROBLEM,
 }
+
+# Groups that say a return is back at the sender.
+_RETURN_CONCLUDED = frozenset({"returned", "return_delivered"})
 
 # Status codes we have already warned about, so each unmapped one is logged
 # only once per HA session instead of on every poll.
@@ -344,6 +348,108 @@ def latest_event(events: list | None) -> dict | None:
     )
 
 
+def _moment(value: Any, zone: tzinfo) -> tuple[datetime, bool, str] | None:
+    """Return ``(aware datetime, date_only, text)`` for a carrier time, or ``None``.
+
+    A naive time or a bare date gets ``zone``; an aware time keeps its offset
+    and, when it came in as a string, its own spelling.
+    """
+    if isinstance(value, datetime):
+        parsed = value
+    elif isinstance(value, date):
+        moment = datetime.combine(value, time.min, tzinfo=zone)
+        return moment, True, moment.isoformat()
+    elif isinstance(value, str) and value:
+        try:
+            if len(value) == 10:
+                moment = datetime.combine(
+                    date.fromisoformat(value), time.min, tzinfo=zone
+                )
+                return moment, True, moment.isoformat()
+            parsed = datetime.fromisoformat(value)
+        except ValueError:
+            return None
+        if parsed.tzinfo:
+            return parsed, False, value
+    else:
+        return None
+    moment = parsed if parsed.tzinfo else parsed.replace(tzinfo=zone)
+    return moment, False, moment.isoformat()
+
+
+def _end_of_day(moment: datetime, zone: tzinfo) -> datetime:
+    local = moment.astimezone(zone)
+    return datetime.combine(local.date(), time(23, 59, 59), tzinfo=zone)
+
+
+def planned_window(
+    start: Any, end: Any, *, zone: tzinfo
+) -> tuple[str | None, str | None]:
+    """Return ``(planned_from, planned_to)`` in the canonical window shape.
+
+    ``start`` and ``end`` are ISO strings, dates or datetimes, or ``None``; an
+    epoch number must be converted first (see ``to_iso_timestamp``). A window
+    keeps both ends. One moment with a time ends at ``23:59:59`` the same local
+    day; a date covers ``00:00:00`` to ``23:59:59``; two dates run from the
+    first day's start to the last day's end. Equal values are one moment,
+    reversed values are swapped, and ``planned_to`` is never set without
+    ``planned_from``. ``zone`` is the carrier's own zone: it dates naive times
+    and bare dates and decides which day a moment ends on, so a ``Z`` moment
+    still ends on the carrier's local day. When nothing is left of that day
+    after the moment, there is no ``planned_to``.
+    """
+    first = _moment(start, zone)
+    last = _moment(end, zone)
+    if first is None:
+        first, last = last, None
+    if first is None:
+        return None, None
+
+    def closing(moment: tuple[datetime, bool, str]) -> datetime:
+        return _end_of_day(moment[0], zone) if moment[1] else moment[0]
+
+    if last is not None and closing(last) < first[0]:
+        first, last = last, first
+    if last is not None and closing(last) == first[0]:
+        last = None
+
+    if last is None:
+        end_of_day = _end_of_day(first[0], zone)
+        return first[2], end_of_day.isoformat() if end_of_day > first[0] else None
+    return first[2], closing(last).isoformat() if last[1] else last[2]
+
+
+_NO_WINDOW_STATUSES = frozenset(
+    {ParcelStatus.AT_PICKUP_POINT, ParcelStatus.RETURNING, ParcelStatus.DELIVERED}
+)
+
+
+def planned_for_status(
+    status: ParcelStatus, planned_from: str | None, planned_to: str | None
+) -> tuple[str | None, str | None]:
+    """Empty the delivery window once the parcel is at its destination or done."""
+    if status in _NO_WINDOW_STATUSES:
+        return None, None
+    return planned_from, planned_to
+
+
+def is_pickup(
+    route_flag: bool | None,
+    status: ParcelStatus,
+    event_statuses: Iterable[ParcelStatus | None] = (),
+) -> bool:
+    """Whether the delivery route ends at a pickup point.
+
+    The carrier's own route flag wins; otherwise the parcel having reached
+    ``AT_PICKUP_POINT`` at any point counts, so the value survives collection.
+    """
+    if route_flag:
+        return True
+    return status is ParcelStatus.AT_PICKUP_POINT or any(
+        event is ParcelStatus.AT_PICKUP_POINT for event in event_statuses
+    )
+
+
 def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     """Return a carrier-agnostic parcel dict with the payload under ``raw``.
 
@@ -360,9 +466,10 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
       the timeline is momentarily unavailable.
     * ``raw_status`` ← the latest event's human ``message`` (falls back to the
       ``group`` / ``shipment_state``).
-    * ``pickup`` / ``pickup_point`` ← ``AT_PICKUP_POINT`` and ``point.name`` —
-      the account payload *does* carry the service point (unlike the keyless
-      endpoint). The locker code (``resolved_pick_up_code``) and item title
+    * ``pickup`` ← a received parcel's ``point``, else the parcel having reached
+      ``AT_PICKUP_POINT`` in any event (so it stays set after collection);
+      ``pickup_point`` ← ``point.name`` of a received parcel — the account
+      payload *does* carry the service point (unlike the keyless endpoint). The locker code (``resolved_pick_up_code``) and item title
       (``content_title``) stay under ``raw``.
     * No sender/receiver name, ETA, weight or dimensions — Vinted Go exposes
       none; kept ``None`` for cross-carrier parity. The direction (sent vs
@@ -378,7 +485,9 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         status = map_parcel_status(group)
     else:
         status = _fallback_status(raw)
-    delivered = status is ParcelStatus.DELIVERED
+    # A concluded return is the explicit back-at-sender signal: it stays
+    # RETURNING (no recipient delivery) but leaves the active list.
+    delivered = status is ParcelStatus.DELIVERED or group in _RETURN_CONCLUDED
 
     if current:
         raw_status = current.get("message") or group
@@ -390,8 +499,24 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     point = raw.get("point")
     if isinstance(point, dict) and point:
         _note_point_shape(point)
-    pickup_point = point.get("name") if isinstance(point, dict) else None
-
+    # Only a received parcel's point is the destination; a sent parcel's point
+    # may be the sender's drop-off, which is not a pickup.
+    incoming = raw.get("contact_type") == "recipient"
+    event_statuses = [
+        map_event_status(event.get("group"))
+        for event in events
+        if isinstance(event, dict)
+    ]
+    pickup = is_pickup(
+        bool(point) if incoming and isinstance(point, dict) else None,
+        status,
+        event_statuses,
+    )
+    pickup_point = (
+        (point.get("name") or None)
+        if pickup and incoming and isinstance(point, dict)
+        else None
+    )
     return {
         "carrier": "Vinted Go",
         "barcode": tracking_code,
@@ -403,8 +528,8 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         "delivered_at": delivered_at if delivered else None,
         "planned_from": None,
         "planned_to": None,
-        "pickup": status is ParcelStatus.AT_PICKUP_POINT,
-        "pickup_point": pickup_point or None,
+        "pickup": pickup,
+        "pickup_point": pickup_point,
         "url": gls_handover_url(raw, events) or tracking_url(tracking_code),
         "weight": None,
         "dimensions": None,

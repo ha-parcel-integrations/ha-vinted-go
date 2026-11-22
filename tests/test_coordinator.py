@@ -208,6 +208,31 @@ async def test_incoming_delivered_event_only(hass):
     assert delivered[0].data["barcode"] == IN
 
 
+async def test_returned_parcel_is_delivered_and_fires_no_delivered_event(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    client = AsyncMock()
+    coord = VintedGoCoordinator(hass, client, entry)
+
+    delivered = []
+    hass.bus.async_listen(f"{DOMAIN}_parcel_delivered", lambda e: delivered.append(e))
+
+    s1, t1 = _ship(IN, CONTACT_TYPE_RECIPIENT, "return", "2099-07-29T10:00:00Z")
+    client.async_get_shipments.return_value = [s1]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t1}.get(c)
+    await coord._async_update_data()
+
+    s2, t2 = _ship(IN, CONTACT_TYPE_RECIPIENT, "returned", "2099-07-30T10:00:00Z")
+    client.async_get_shipments.return_value = [s2]
+    client.async_get_tracking_events.side_effect = lambda c: {IN: t2}.get(c)
+    await coord._async_update_data()
+    await hass.async_block_till_done()
+
+    assert [p["barcode"] for p in coord.delivered] == [IN]
+    assert coord.delivered[0]["status"] == ParcelStatus.RETURNING
+    assert delivered == []
+
+
 async def test_registered_event_for_new_incoming(hass):
     entry = _entry()
     entry.add_to_hass(hass)

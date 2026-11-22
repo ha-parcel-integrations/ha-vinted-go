@@ -41,7 +41,9 @@ from .payloads import event, parcel_raw
         ("ready_for_pickup", ParcelStatus.AT_PICKUP_POINT),
         ("delivered", ParcelStatus.DELIVERED),
         ("return", ParcelStatus.RETURNING),
-        ("returned", ParcelStatus.DELIVERED),
+        ("returned", ParcelStatus.RETURNING),
+        ("return_delivered", ParcelStatus.RETURNING),
+        ("return_ready_for_pickup", ParcelStatus.AT_PICKUP_POINT),
         ("redirected", ParcelStatus.IN_TRANSIT),
         ("left_our_network", ParcelStatus.IN_TRANSIT),
         ("return_to_sender", ParcelStatus.RETURNING),
@@ -170,19 +172,31 @@ def test_normalize_pickup_point_and_bool():
     assert parcel["pickup_point"] == "Vinted Go Point Central Station"
 
 
-def test_normalize_returned_parcel_reports_delivered():
+def test_normalize_returned_parcel_is_returning_but_delivered():
     """A concluded return ("returned") must not fall back to unknown.
 
     Regression test for a real receiving account (ha-vinted-go#4): the
     "returned" group was missing from the map, so every completed return
-    reported ``unknown`` instead of ``delivered``.
+    reported ``unknown``. It stays ``returning`` but counts as delivered
+    (back at the sender), stamped with the returned event's time.
     """
     raw = parcel_raw("VGS1")
     raw["tracking_events"].append(
-        event("returned", "2026-07-30T09:00:00Z", "Return: Parcel was returned")
+        event("returned", "2099-07-30T09:00:00Z", "Return: Parcel was returned")
     )
     parcel = normalize_parcel(raw)
-    assert parcel["status"] == ParcelStatus.DELIVERED
+    assert parcel["status"] == ParcelStatus.RETURNING
+    assert parcel["delivered"] is True
+    assert parcel["delivered_at"] == "2099-07-30T09:00:00Z"
+
+
+def test_unseen_return_delivered_is_returning_but_delivered():
+    raw = parcel_raw("VGS1")
+    raw["tracking_events"].append(
+        event("return_delivered", "2099-07-30T09:00:00Z", "Return delivered")
+    )
+    parcel = normalize_parcel(raw)
+    assert parcel["status"] == ParcelStatus.RETURNING
     assert parcel["delivered"] is True
 
 

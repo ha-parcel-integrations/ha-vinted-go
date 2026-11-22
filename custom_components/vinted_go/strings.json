@@ -88,6 +88,10 @@
         "name": "Incoming parcels",
         "unit_of_measurement": "parcels"
       },
+      "en_route_to_pickup_point": {
+        "name": "En route to pickup point",
+        "unit_of_measurement": "parcels"
+      },
       "awaiting_pickup": {
         "name": "Awaiting pickup",
         "unit_of_measurement": "parcels"
