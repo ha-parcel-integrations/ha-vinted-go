@@ -1,6 +1,6 @@
 """Tests for the Vinted Go coordinator: fetch, split, cache and events."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
@@ -20,9 +20,11 @@ from custom_components.vinted_go.const import (
     ParcelStatus,
 )
 from custom_components.vinted_go.coordinator import VintedGoCoordinator
+from custom_components.vinted_go.parcels import normalize_parcel
 
 from .payloads import event, shipment, timeline
 
+COORDINATOR = "custom_components.vinted_go.coordinator"
 IN = "VGS0000000000001"
 OUT = "VGS0000000000002"
 
@@ -419,3 +421,63 @@ async def test_a_parcel_the_delivered_list_leaves_out_still_fires_delivered(hass
 
     assert sorted(e.data["barcode"] for e in delivered) == sorted([IN, other])
     assert [p["barcode"] for p in coord.delivered] == [other]
+
+
+# ---------------------------------------------------------------------------
+# contents overlay
+# ---------------------------------------------------------------------------
+
+
+def _coordinator(hass, shipments, timelines) -> VintedGoCoordinator:
+    entry = _entry()
+    entry.add_to_hass(hass)
+    return VintedGoCoordinator(hass, _client(shipments, timelines), entry)
+
+
+async def test_user_contents_overlays_the_carrier_value(hass):
+    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-29T10:00:00Z")
+    coordinator = _coordinator(hass, [s_in], {IN: t_in})
+
+    data = await coordinator._async_update_data()
+    assert data[0]["contents"] == "A dress"
+
+    coordinator.contents_store.async_set(IN, "Running shoes")
+    data = await coordinator._async_update_data()
+    assert data[0]["contents"] == "Running shoes"
+
+    coordinator.contents_store.async_set(IN, None)
+    data = await coordinator._async_update_data()
+    assert data[0]["contents"] == "A dress"
+
+
+async def test_user_contents_reaches_outgoing_and_delivered_parcels(hass):
+    s_out, t_out = _ship(OUT, CONTACT_TYPE_SENDER, "in_transit", "2026-07-29T10:00:00Z")
+    s_in, t_in = _ship(
+        IN, CONTACT_TYPE_RECIPIENT, "delivered", "2026-07-30T10:00:00Z", "delivered"
+    )
+    coordinator = _coordinator(hass, [s_out, s_in], {OUT: t_out, IN: t_in})
+    coordinator.contents_store.async_set(OUT, "Winter socks")
+    coordinator.contents_store.async_set(IN, "Running shoes")
+
+    await coordinator._async_update_data()
+
+    assert coordinator.outgoing[0]["contents"] == "Winter socks"
+    assert coordinator.delivered[0]["contents"] == "Running shoes"
+
+
+async def test_a_parcel_without_a_barcode_gets_no_user_contents(hass):
+    coordinator = _coordinator(hass, [], {})
+    coordinator.contents_store.async_set("VGS1", "Running shoes")
+
+    def _no_barcode(raw, **kwargs):
+        parcel = normalize_parcel(raw, **kwargs)
+        parcel["barcode"] = None
+        return parcel
+
+    s_in, t_in = _ship(IN, CONTACT_TYPE_RECIPIENT, "in_transit", "2026-07-29T10:00:00Z")
+    coordinator._client.async_get_shipments.return_value = [s_in]
+    coordinator._client.async_get_tracking_events.side_effect = lambda code: t_in
+    with patch(f"{COORDINATOR}.normalize_parcel", side_effect=_no_barcode):
+        data = await coordinator._async_update_data()
+
+    assert data[0]["contents"] == "A dress"

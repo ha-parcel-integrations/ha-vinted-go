@@ -32,6 +32,7 @@ from .const import (
     TRACKING_URL,
     ParcelStatus,
 )
+from .contents import clean_contents
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -469,8 +470,9 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
     * ``pickup`` ← a received parcel's ``point``, else the parcel having reached
       ``AT_PICKUP_POINT`` in any event (so it stays set after collection);
       ``pickup_point`` ← ``point.name`` of a received parcel — the account
-      payload *does* carry the service point (unlike the keyless endpoint). The locker code (``resolved_pick_up_code``) and item title
-      (``content_title``) stay under ``raw``.
+      payload *does* carry the service point (unlike the keyless endpoint). The locker code (``resolved_pick_up_code``) stays under ``raw``.
+    * ``contents`` ← the shipment's ``content_title`` (the item title), cleaned;
+      the coordinator overlays the user's own value on top.
     * No sender/receiver name, ETA, weight or dimensions — Vinted Go exposes
       none; kept ``None`` for cross-carrier parity. The direction (sent vs
       received) is the shipment's ``contact_type``, which the coordinator uses
@@ -522,6 +524,7 @@ def normalize_parcel(raw: dict, *, include_history: bool = False) -> dict:
         "barcode": tracking_code,
         "sender": None,
         "receiver": None,
+        "contents": clean_contents(raw.get("content_title")),
         "status": status,
         "raw_status": raw_status,
         "delivered": delivered,

@@ -115,5 +115,21 @@
         "name": "Paquete {barcode}"
       }
     }
+  },
+  "services": {
+    "update_contents": {
+      "name": "Actualizar el contenido del paquete",
+      "description": "Indica lo que hay en un paquete, con tus propias palabras, para un código de seguimiento. Un texto vacío borra el contenido.",
+      "fields": {
+        "tracking_code": {
+          "name": "Código de seguimiento",
+          "description": "El código de seguimiento del paquete."
+        },
+        "contents": {
+          "name": "Contenido",
+          "description": "Lo que hay en el paquete, con tus propias palabras. Un texto vacío lo borra."
+        }
+      }
+    }
   }
 }

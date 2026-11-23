@@ -24,6 +24,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -77,6 +78,13 @@ def parcel(request) -> dict:
 
 def test_keys_and_order(parcel):
     assert list(parcel) == CANONICAL_KEYS
+
+
+def test_contents_is_none_or_one_trimmed_line(parcel):
+    contents = parcel["contents"]
+    assert contents is None or (
+        isinstance(contents, str) and contents == " ".join(contents.split())
+    )
 
 
 def test_delivered_follows_status(parcel):

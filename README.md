@@ -132,6 +132,8 @@ A parcel Vinted Go closes without delivering it (disposed, lost, cancelled) disa
 
 A **Refresh** button entity forces an immediate poll, without waiting for the next scheduled interval.
 
+The `vinted_go.update_contents` action sets what is in a parcel, in your own words, for a tracking code (it shows as `contents`, taking over from the item title); leaving the text empty clears it.
+
 ## Parcel status reference
 
 The `status` field is the carrier-agnostic enum shared by the whole integration family:

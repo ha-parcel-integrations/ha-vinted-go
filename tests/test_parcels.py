@@ -118,6 +118,7 @@ CANONICAL_KEYS = [
     "barcode",
     "sender",
     "receiver",
+    "contents",
     "status",
     "raw_status",
     "delivered",
@@ -144,6 +145,7 @@ def test_normalize_delivered_parcel():
     assert parcel["barcode"] == "VGS0000000000009"
     assert parcel["sender"] is None
     assert parcel["receiver"] is None
+    assert parcel["contents"] == "A dress"
     assert parcel["status"] == ParcelStatus.DELIVERED
     assert parcel["raw_status"] == "Collected"
     assert parcel["delivered"] is True
@@ -293,9 +295,9 @@ def test_capabilities_are_known_values():
     assert CAPABILITIES <= KNOWN_CAPABILITIES
 
 
-def test_capabilities_are_pickup_point_url_and_history():
+def test_capabilities_are_pickup_point_url_history_and_contents():
     """The account payload carries the service point but no ETA/weight/dimensions."""
-    assert {"pickup_point", "url", "history"} == CAPABILITIES
+    assert {"pickup_point", "url", "history", "contents"} == CAPABILITIES
 
 
 _GLS_HUB = {"code": "NL100402", "name": "GLS NL HUB", "country_code": "DE"}
@@ -344,3 +346,28 @@ def test_url_stays_vinted_go_without_a_gls_point():
     )
 
     assert parcel["url"].startswith("https://vintedgo.com/")
+
+
+def test_contents_is_the_cleaned_item_title():
+    raw = parcel_raw("VGS1")
+    raw["content_title"] = "  Winter \n coat  "
+
+    parcel = normalize_parcel(raw)
+
+    assert parcel["contents"] == "Winter coat"
+    assert parcel["raw"]["content_title"] == "  Winter \n coat  "
+
+
+def test_contents_is_cut_at_the_cap():
+    raw = parcel_raw("VGS1")
+    raw["content_title"] = "x" * 500
+
+    assert len(normalize_parcel(raw)["contents"]) == 120
+
+
+@pytest.mark.parametrize("title", [None, "", "   ", 7])
+def test_contents_is_none_without_a_usable_title(title):
+    raw = parcel_raw("VGS1")
+    raw["content_title"] = title
+
+    assert normalize_parcel(raw)["contents"] is None

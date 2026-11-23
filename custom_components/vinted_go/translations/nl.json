@@ -115,5 +115,21 @@
         "name": "Pakket {barcode}"
       }
     }
+  },
+  "services": {
+    "update_contents": {
+      "name": "Pakketinhoud bijwerken",
+      "description": "Stel in wat er in een pakket zit, in je eigen woorden, voor een trackingcode. Een lege tekst wist de inhoud.",
+      "fields": {
+        "tracking_code": {
+          "name": "Trackingcode",
+          "description": "De trackingcode van het pakket."
+        },
+        "contents": {
+          "name": "Inhoud",
+          "description": "Wat er in het pakket zit, in je eigen woorden. Een lege tekst wist de inhoud."
+        }
+      }
+    }
   }
 }

@@ -5,14 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import VintedGoApiClient
-from .const import CONF_REFRESH_TOKEN, PLATFORMS
+from .const import CONF_REFRESH_TOKEN, DOMAIN, PLATFORMS
+from .contents import ContentsStore
 from .coordinator import VintedGoCoordinator
+from .services import async_setup_services, async_unload_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,6 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: VintedGoConfigEntry) -> 
         on_tokens_updated=_persist_refresh_token,
     )
     coordinator = VintedGoCoordinator(hass, client, entry)
+    await coordinator.contents_store.async_load()
 
     # First refresh here, before forwarding to platforms: a failing fetch fails
     # the whole entry cleanly (ConfigEntryNotReady → backoff), and an expired
@@ -60,16 +63,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: VintedGoConfigEntry) -> 
     entry.runtime_data = VintedGoData(client=client, coordinator=coordinator)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    async_setup_services(hass)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: VintedGoConfigEntry) -> bool:
     """Unload the Vinted Go config entry (does not revoke the session)."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        # The services are shared by every account, so they go with the last one.
+        if not any(
+            other.state is ConfigEntryState.LOADED
+            for other in hass.config_entries.async_entries(DOMAIN)
+            if other.entry_id != entry.entry_id
+        ):
+            async_unload_services(hass)
+        return True
+    return False
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: VintedGoConfigEntry) -> None:
-    """Revoke the Vinted Go session when the integration is removed."""
+    """Revoke the Vinted Go session and delete the contents the user set."""
+    await ContentsStore(hass, entry.entry_id).async_remove()
     refresh_token = entry.data.get(CONF_REFRESH_TOKEN)
     if not refresh_token:
         return

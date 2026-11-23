@@ -115,5 +115,21 @@
         "name": "Parcel {barcode}"
       }
     }
+  },
+  "services": {
+    "update_contents": {
+      "name": "Update parcel contents",
+      "description": "Set what is in a parcel, in your own words, for a tracking code. An empty text clears it.",
+      "fields": {
+        "tracking_code": {
+          "name": "Tracking code",
+          "description": "The tracking code of the parcel."
+        },
+        "contents": {
+          "name": "Contents",
+          "description": "What is in the parcel, in your own words. An empty text clears it."
+        }
+      }
+    }
   }
 }

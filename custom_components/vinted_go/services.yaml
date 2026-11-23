@@ -1,0 +1,12 @@
+update_contents:
+  fields:
+    tracking_code:
+      required: true
+      example: "VGS0000000000001"
+      selector:
+        text:
+    contents:
+      required: false
+      example: "Running shoes"
+      selector:
+        text:

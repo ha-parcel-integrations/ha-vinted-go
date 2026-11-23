@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from homeassistant.config_entries import ConfigEntryState
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.vinted_go import async_remove_entry, async_unload_entry
 from custom_components.vinted_go.api import VintedGoApiError, VintedGoAuthError
 from custom_components.vinted_go.const import (
     CONF_DELIVERED_FILTER_AMOUNT,
@@ -132,3 +133,35 @@ async def test_remove_revokes_session(hass):
         await hass.async_block_till_done()
         await hass.config_entries.async_remove(entry.entry_id)
     client.async_logout.assert_awaited()
+
+
+async def test_a_failed_platform_unload_keeps_the_entry_loaded(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    with _patch(_client(shipments_list())):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        with patch.object(
+            hass.config_entries, "async_unload_platforms", AsyncMock(return_value=False)
+        ):
+            assert not await async_unload_entry(hass, entry)
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_a_rotated_refresh_token_is_stored(hass):
+    entry = _entry()
+    entry.add_to_hass(hass)
+    client = _client(shipments_list())
+    with _patch(client) as factory:
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+    factory.call_args.kwargs["on_tokens_updated"]("rt-new")
+    assert entry.data[CONF_REFRESH_TOKEN] == "rt-new"
+
+
+async def test_removing_an_entry_without_a_token_skips_the_logout(hass):
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_EMAIL: "a@b.c"})
+    entry.add_to_hass(hass)
+    with _patch(_client()) as factory:
+        await async_remove_entry(hass, entry)
+    factory.assert_not_called()

@@ -33,15 +33,23 @@ PLATFORMS = [Platform.BUTTON, Platform.SENSOR]
 # subset of this — it exists so a typo in CAPABILITIES fails a test instead of
 # silently dropping this carrier off a table on the docs site.
 KNOWN_CAPABILITIES = frozenset(
-    {"weight", "dimensions", "delivery_window", "pickup_point", "url", "history"}
+    {
+        "weight",
+        "dimensions",
+        "delivery_window",
+        "pickup_point",
+        "url",
+        "history",
+        "contents",
+    }
 )
 
 # Which optional contract fields this carrier's API actually populates — feeds
 # the comparison table on the docs site. Keep in lockstep with
 # normalize_parcel() in parcels.py: everything not listed here comes back as a
 # literal None there. Vinted Go's account payload carries the service point
-# but no sender/receiver, ETA, weight or dimensions.
-CAPABILITIES = frozenset({"pickup_point", "url", "history"})
+# and the item title but no sender/receiver, ETA, weight or dimensions.
+CAPABILITIES = frozenset({"pickup_point", "url", "history", "contents"})
 
 # --- Vinted Go account API (carrier.vintedgo.com/members) --------------------
 #
@@ -86,6 +94,10 @@ GLS_TRACKING_URL = "https://gls-group.com/GROUP/en/parcel-tracking?match={code}"
 CONF_EMAIL = "email"
 CONF_REFRESH_TOKEN = "refresh_token"
 CONF_USER_ID = "user_id"
+
+# The user-set parcel contents, and the tracking code the contents action is keyed on.
+CONF_CONTENTS = "contents"
+CONF_TRACKING_CODE = "tracking_code"
 
 # Direction tag on each shipment (Vinted Go's ``contact_type``): a parcel the
 # user is receiving vs one they sent. Maps to the suite's incoming / outgoing.

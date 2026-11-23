@@ -23,6 +23,7 @@ TO_REDACT = {
     # canonical parcel fields we publish
     "tracking_code",
     "barcode",
+    "contents",
     "url",
     # carrier shipment fields
     "content_title",

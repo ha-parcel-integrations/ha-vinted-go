@@ -34,6 +34,7 @@ from .const import (
     STATUS_GROUP_COMPLETED,
     ParcelStatus,
 )
+from .contents import ContentsStore
 from .parcels import (
     apply_delivered_filter,
     normalize_parcel,
@@ -142,6 +143,7 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
             update_interval=timedelta(minutes=HOT_INTERVAL_MINUTES),
         )
         self._client = client
+        self.contents_store = ContentsStore(hass, entry.entry_id)
         self.delivered: list[dict] = []
         self.outgoing: list[dict] = []
         self.delivered_outgoing: list[dict] = []
@@ -159,6 +161,14 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
         # Tier last computed by _hottest_tier_minutes — surfaced in
         # diagnostics. None until the first successful refresh.
         self._current_tier_minutes: int | None = None
+
+    def _apply_contents(self, parcel: dict) -> dict:
+        """Put the user's own contents text over the carrier's, when there is one."""
+        barcode = parcel.get("barcode")
+        user_value = self.contents_store.get(barcode) if barcode else None
+        if user_value is not None:
+            parcel["contents"] = user_value
+        return parcel
 
     @property
     def current_tier_minutes(self) -> int | None:
@@ -228,7 +238,8 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
 
         include_history = self._include_history
         normalized = [
-            normalize_parcel(raw, include_history=include_history) for raw in enriched
+            self._apply_contents(normalize_parcel(raw, include_history=include_history))
+            for raw in enriched
         ]
 
         incoming = [

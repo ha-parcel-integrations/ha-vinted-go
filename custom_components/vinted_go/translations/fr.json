@@ -115,5 +115,21 @@
         "name": "Colis {barcode}"
       }
     }
+  },
+  "services": {
+    "update_contents": {
+      "name": "Mettre à jour le contenu du colis",
+      "description": "Définissez ce que contient un colis, avec vos propres mots, pour un numéro de suivi. Un texte vide efface le contenu.",
+      "fields": {
+        "tracking_code": {
+          "name": "Numéro de suivi",
+          "description": "Le numéro de suivi du colis."
+        },
+        "contents": {
+          "name": "Contenu",
+          "description": "Ce que contient le colis, avec vos propres mots. Un texte vide l'efface."
+        }
+      }
+    }
   }
 }

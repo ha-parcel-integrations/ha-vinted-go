@@ -17,6 +17,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     entry.options = {"include_history": False}
     parcel = {
         "barcode": "VGS1",
+        "contents": "A dress",
         "status": "in_transit",
         "url": "https://vintedgo.com/en/tracking/VGS1",
         "raw": {
@@ -43,6 +44,7 @@ async def test_diagnostics_redacts_and_counts(hass):
     incoming = result["incoming"][0]
     assert incoming["barcode"] == "**REDACTED**"
     assert incoming["url"] == "**REDACTED**"
+    assert incoming["contents"] == "**REDACTED**"
     assert incoming["raw"]["tracking_code"] == "**REDACTED**"
     assert incoming["raw"]["content_title"] == "**REDACTED**"
     assert incoming["raw"]["resolved_pick_up_code"] == "**REDACTED**"
