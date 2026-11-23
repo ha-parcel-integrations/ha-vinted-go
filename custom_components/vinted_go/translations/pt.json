@@ -128,8 +128,17 @@
         "contents": {
           "name": "Conteúdo",
           "description": "O que está na encomenda, nas suas próprias palavras. Um texto vazio apaga-o."
+        },
+        "config_entry_id": {
+          "name": "Conta",
+          "description": "A conta para a qual guardar isto. Necessária quando nenhuma conta conhece ainda o código."
         }
       }
+    }
+  },
+  "exceptions": {
+    "update_contents_entry_required": {
+      "message": "Nenhuma conta conhece este código. Escolha a conta para a qual o guardar."
     }
   }
 }

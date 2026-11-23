@@ -34,7 +34,7 @@ from .const import (
     STATUS_GROUP_COMPLETED,
     ParcelStatus,
 )
-from .contents import ContentsStore
+from .contents import ContentsStore, normalize_code
 from .parcels import (
     apply_delivered_filter,
     normalize_parcel,
@@ -144,6 +144,9 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
         )
         self._client = client
         self.contents_store = ContentsStore(hass, entry.entry_id)
+        # Every code the account lists, delivered and outgoing ones included:
+        # update_contents asks which account a code belongs to.
+        self.known_codes: frozenset[str] = frozenset()
         self.delivered: list[dict] = []
         self.outgoing: list[dict] = []
         self.delivered_outgoing: list[dict] = []
@@ -241,6 +244,10 @@ class VintedGoCoordinator(DataUpdateCoordinator[list[dict]]):
             self._apply_contents(normalize_parcel(raw, include_history=include_history))
             for raw in enriched
         ]
+
+        self.known_codes = frozenset(
+            normalize_code(p["barcode"]) for p in normalized if p.get("barcode")
+        )
 
         incoming = [
             p

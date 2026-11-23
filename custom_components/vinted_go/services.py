@@ -2,7 +2,8 @@
 
 `vinted_go.update_contents` sets or clears the text describing what is in
 a parcel. The account lists its own parcels, so there is nothing to track by
-hand — this is the only service.
+hand — this is the only service. With several accounts it goes to the
+account(s) that list the code, or to the one named by ``config_entry_id``.
 """
 
 from __future__ import annotations
@@ -13,7 +14,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
-from .const import CONF_CONTENTS, CONF_TRACKING_CODE, DOMAIN
+from .const import CONF_CONFIG_ENTRY_ID, CONF_CONTENTS, CONF_TRACKING_CODE, DOMAIN
 from .contents import normalize_code
 
 SERVICE_UPDATE_CONTENTS = "update_contents"
@@ -22,6 +23,7 @@ _UPDATE_CONTENTS_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_TRACKING_CODE): cv.string,
         vol.Optional(CONF_CONTENTS): cv.string,
+        vol.Optional(CONF_CONFIG_ENTRY_ID): cv.string,
     }
 )
 
@@ -35,21 +37,40 @@ def async_setup_services(hass: HomeAssistant) -> None:
         tracking_code = normalize_code(call.data[CONF_TRACKING_CODE])
         if not tracking_code:
             raise ServiceValidationError("A tracking code is required")
-        entry = next(
-            (
-                candidate
-                for candidate in hass.config_entries.async_entries(DOMAIN)
-                if candidate.state is ConfigEntryState.LOADED
-            ),
-            None,
-        )
-        if entry is None:
+        loaded = [
+            candidate
+            for candidate in hass.config_entries.async_entries(DOMAIN)
+            if candidate.state is ConfigEntryState.LOADED
+        ]
+        if not loaded:
             raise ServiceValidationError("Vinted Go is not set up")
-        coordinator = entry.runtime_data.coordinator
-        if coordinator.contents_store.async_set(
-            tracking_code, call.data.get(CONF_CONTENTS)
-        ):
-            await coordinator.async_request_refresh()
+        if entry_id := call.data.get(CONF_CONFIG_ENTRY_ID):
+            targets = [entry for entry in loaded if entry.entry_id == entry_id]
+            if not targets:
+                raise ServiceValidationError(
+                    f"'{entry_id}' is not a loaded Vinted Go account"
+                )
+        elif len(loaded) == 1:
+            targets = loaded
+        else:
+            # A code can sit in two accounts, so every account that lists it
+            # gets the value; guessing an account would write to the wrong one.
+            targets = [
+                entry
+                for entry in loaded
+                if tracking_code in entry.runtime_data.coordinator.known_codes
+            ]
+            if not targets:
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="update_contents_entry_required",
+                )
+        for entry in targets:
+            coordinator = entry.runtime_data.coordinator
+            if coordinator.contents_store.async_set(
+                tracking_code, call.data.get(CONF_CONTENTS)
+            ):
+                await coordinator.async_request_refresh()
 
     hass.services.async_register(
         DOMAIN,

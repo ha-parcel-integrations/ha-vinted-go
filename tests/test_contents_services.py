@@ -17,12 +17,13 @@ from custom_components.vinted_go.const import (
     CONF_REFRESH_TOKEN,
     CONF_TRACKING_CODE,
     CONF_USER_ID,
+    CONTACT_TYPE_RECIPIENT,
     DOMAIN,
 )
 from custom_components.vinted_go.contents import CONTENTS_STORE_MAX_CODES
 from custom_components.vinted_go.coordinator import VintedGoCoordinator
 
-from .payloads import INCOMING_CODE, OUTGOING_CODE, shipments_list, timeline
+from .payloads import INCOMING_CODE, OUTGOING_CODE, shipment, shipments_list, timeline
 
 REFRESH = f"{VintedGoCoordinator.__module__}.VintedGoCoordinator"
 UNTRACKED = "VGS0000000000555"
@@ -41,25 +42,31 @@ def _config_entry(user_id: int = 12345) -> MockConfigEntry:
     )
 
 
-def _client() -> MagicMock:
+def _client(shipments: list[dict] | None = None) -> MagicMock:
     client = MagicMock()
-    client.async_get_shipments = AsyncMock(return_value=shipments_list())
+    client.async_get_shipments = AsyncMock(
+        return_value=shipments_list() if shipments is None else shipments
+    )
     client.async_get_tracking_events = AsyncMock(return_value=timeline([]))
     client.async_logout = AsyncMock()
     return client
 
 
-def _patch():
+def _patch(shipments: list[dict] | None = None):
     return patch(
         "custom_components.vinted_go.VintedGoApiClient",
-        side_effect=lambda *a, **k: _client(),
+        side_effect=lambda *a, **k: _client(shipments),
     )
 
 
-async def _setup(hass, entry: MockConfigEntry | None = None) -> MockConfigEntry:
+async def _setup(
+    hass,
+    entry: MockConfigEntry | None = None,
+    shipments: list[dict] | None = None,
+) -> MockConfigEntry:
     entry = entry or _config_entry()
     entry.add_to_hass(hass)
-    with _patch():
+    with _patch(shipments):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     return entry
@@ -226,3 +233,160 @@ async def test_a_contents_change_alone_fires_no_event(hass):
     await _call(hass, {CONF_TRACKING_CODE: OUTGOING_CODE, "contents": "Running shoes"})
 
     assert events == []
+
+
+OTHER_CODE = "VGS0000000000777"
+
+
+def _incoming(code: str, *, delivered: bool = False) -> dict:
+    return shipment(
+        code,
+        CONTACT_TYPE_RECIPIENT,
+        resolution="delivered" if delivered else None,
+    )
+
+
+def _stored(entry: MockConfigEntry, code: str) -> str | None:
+    return entry.runtime_data.coordinator.contents_store.get(code)
+
+
+async def _two_accounts(hass, first_shipments, second_shipments):
+    first = await _setup(hass, shipments=first_shipments)
+    second = await _setup(hass, _config_entry(67890), second_shipments)
+    return first, second
+
+
+async def _call_quiet(hass, data: dict) -> AsyncMock:
+    with patch(f"{REFRESH}.async_request_refresh", new=AsyncMock()) as refresh:
+        await hass.services.async_call(DOMAIN, "update_contents", data, blocking=True)
+        await hass.async_block_till_done()
+    return refresh
+
+
+async def test_several_accounts_store_in_the_one_that_lists_the_code(hass):
+    first, second = await _two_accounts(
+        hass, [_incoming(INCOMING_CODE)], [_incoming(OTHER_CODE)]
+    )
+
+    refresh = await _call_quiet(
+        hass, {CONF_TRACKING_CODE: OTHER_CODE, "contents": "Shoes"}
+    )
+
+    assert _stored(first, OTHER_CODE) is None
+    assert _stored(second, OTHER_CODE) == "Shoes"
+    assert refresh.await_count == 1
+
+
+async def test_several_accounts_find_a_delivered_parcel(hass):
+    first, second = await _two_accounts(
+        hass, [_incoming(INCOMING_CODE)], [_incoming(OTHER_CODE, delivered=True)]
+    )
+
+    await _call_quiet(hass, {CONF_TRACKING_CODE: OTHER_CODE, "contents": "Shoes"})
+
+    assert _stored(first, OTHER_CODE) is None
+    assert _stored(second, OTHER_CODE) == "Shoes"
+
+
+async def test_several_accounts_find_an_outgoing_parcel(hass):
+    first, second = await _two_accounts(
+        hass, [_incoming(INCOMING_CODE)], shipments_list()
+    )
+
+    await _call_quiet(hass, {CONF_TRACKING_CODE: OUTGOING_CODE, "contents": "Shoes"})
+
+    assert _stored(first, OUTGOING_CODE) is None
+    assert _stored(second, OUTGOING_CODE) == "Shoes"
+
+
+async def test_a_code_in_two_accounts_is_stored_in_both(hass):
+    first, second = await _two_accounts(
+        hass, [_incoming(INCOMING_CODE)], [_incoming(INCOMING_CODE)]
+    )
+
+    refresh = await _call_quiet(
+        hass, {CONF_TRACKING_CODE: INCOMING_CODE, "contents": "Shoes"}
+    )
+
+    assert _stored(first, INCOMING_CODE) == "Shoes"
+    assert _stored(second, INCOMING_CODE) == "Shoes"
+    assert refresh.await_count == 2
+
+
+async def test_several_accounts_refresh_only_where_the_value_changed(hass):
+    first, second = await _two_accounts(
+        hass, [_incoming(INCOMING_CODE)], [_incoming(INCOMING_CODE)]
+    )
+    first.runtime_data.coordinator.contents_store.async_set(INCOMING_CODE, "Shoes")
+
+    refresh = await _call_quiet(
+        hass, {CONF_TRACKING_CODE: INCOMING_CODE, "contents": "Shoes"}
+    )
+
+    assert _stored(second, INCOMING_CODE) == "Shoes"
+    assert refresh.await_count == 1
+
+
+async def test_an_unknown_code_with_several_accounts_needs_an_account(hass):
+    first, second = await _two_accounts(hass, None, None)
+
+    with pytest.raises(ServiceValidationError) as raised:
+        await _call_quiet(hass, {CONF_TRACKING_CODE: UNTRACKED, "contents": "Shoes"})
+
+    assert raised.value.translation_key == "update_contents_entry_required"
+    assert _stored(first, UNTRACKED) is None
+    assert _stored(second, UNTRACKED) is None
+
+
+async def test_a_named_account_stores_even_an_unknown_code(hass):
+    first, second = await _two_accounts(hass, None, None)
+
+    await _call_quiet(
+        hass,
+        {
+            CONF_TRACKING_CODE: UNTRACKED,
+            "contents": "Shoes",
+            "config_entry_id": second.entry_id,
+        },
+    )
+
+    assert _stored(first, UNTRACKED) is None
+    assert _stored(second, UNTRACKED) == "Shoes"
+
+
+async def test_a_named_account_limits_a_code_both_accounts_list(hass):
+    first, second = await _two_accounts(hass, None, None)
+
+    await _call_quiet(
+        hass,
+        {
+            CONF_TRACKING_CODE: INCOMING_CODE,
+            "contents": "Shoes",
+            "config_entry_id": first.entry_id,
+        },
+    )
+
+    assert _stored(first, INCOMING_CODE) == "Shoes"
+    assert _stored(second, INCOMING_CODE) is None
+
+
+async def test_a_named_account_that_is_not_loaded_is_refused(hass):
+    await _setup(hass)
+
+    with pytest.raises(ServiceValidationError):
+        await _call_quiet(
+            hass,
+            {
+                CONF_TRACKING_CODE: INCOMING_CODE,
+                "contents": "Shoes",
+                "config_entry_id": "nope",
+            },
+        )
+
+
+async def test_a_single_account_stores_an_unknown_code_without_naming_it(hass):
+    entry = await _setup(hass)
+
+    await _call_quiet(hass, {CONF_TRACKING_CODE: UNTRACKED, "contents": "Shoes"})
+
+    assert _stored(entry, UNTRACKED) == "Shoes"

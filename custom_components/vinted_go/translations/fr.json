@@ -128,8 +128,17 @@
         "contents": {
           "name": "Contenu",
           "description": "Ce que contient le colis, avec vos propres mots. Un texte vide l'efface."
+        },
+        "config_entry_id": {
+          "name": "Compte",
+          "description": "Le compte pour lequel enregistrer cette valeur. Requis quand aucun compte ne connaît encore le code."
         }
       }
+    }
+  },
+  "exceptions": {
+    "update_contents_entry_required": {
+      "message": "Aucun compte ne connaît ce code. Choisissez le compte pour lequel l'enregistrer."
     }
   }
 }

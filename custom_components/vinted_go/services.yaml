@@ -10,3 +10,8 @@ update_contents:
       example: "Running shoes"
       selector:
         text:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: vinted_go

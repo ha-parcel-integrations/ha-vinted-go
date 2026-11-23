@@ -128,8 +128,17 @@
         "contents": {
           "name": "Contenido",
           "description": "Lo que hay en el paquete, con tus propias palabras. Un texto vacío lo borra."
+        },
+        "config_entry_id": {
+          "name": "Cuenta",
+          "description": "La cuenta para la que guardar esto. Necesaria cuando ninguna cuenta conoce aún el código."
         }
       }
+    }
+  },
+  "exceptions": {
+    "update_contents_entry_required": {
+      "message": "Ninguna cuenta conoce este código. Elige la cuenta para la que guardarlo."
     }
   }
 }

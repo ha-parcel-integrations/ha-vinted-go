@@ -98,6 +98,7 @@ CONF_USER_ID = "user_id"
 # The user-set parcel contents, and the tracking code the contents action is keyed on.
 CONF_CONTENTS = "contents"
 CONF_TRACKING_CODE = "tracking_code"
+CONF_CONFIG_ENTRY_ID = "config_entry_id"
 
 # Direction tag on each shipment (Vinted Go's ``contact_type``): a parcel the
 # user is receiving vs one they sent. Maps to the suite's incoming / outgoing.
